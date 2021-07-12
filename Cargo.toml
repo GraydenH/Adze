@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "adze-engine",
+    "sandbox",
+]
+name = "adze"
+version = "0.1.0"
+authors = ["Grayden Hormes <graydenhormes@gmail.com>"]
+edition = "2018"
