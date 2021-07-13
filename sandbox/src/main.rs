@@ -1,5 +1,6 @@
+use adze_engine::run;
+
 fn main() {
-    use adze_engine::adze;
     println!("Hello, world!");
-    adze::run2();
+    run();
 }
