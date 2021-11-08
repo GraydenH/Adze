@@ -1,20 +1,16 @@
-extern crate gl;
-extern crate glutin;
-
-
-use gl::types::*;
 use std::ffi::{CString, c_void};
 use std::mem;
 use std::ptr;
 use std::str;
+use glow::HasContext;
 
 // Vertex data
-static VERTEX_DATA: [GLfloat; 7 * 3] = [
+static VERTEX_DATA: [f32; 7 * 3] = [
     -0.5, -0.5, 0.0, 0.8, 0.2, 0.8, 1.0,
      0.5, -0.5, 0.0, 0.2, 0.3, 0.8, 1.0,
      0.0,  0.5, 0.0, 0.8, 0.8, 0.2, 1.0
 ];
-static INDEX_DATA: [GLint; 3] = [
+static INDEX_DATA: [u32; 3] = [
     0, 1, 2
 ];
 // Shader sources
@@ -50,148 +46,142 @@ static FS_SRC: &'static str = "
         }
 ";
 
-fn compile_shader(src: &str, ty: GLenum) -> GLuint {
-    let shader;
+fn compile_shader(gl: &glow::Context, src: &str, ty: u32) -> glow::Shader {
     unsafe {
-        shader = gl::CreateShader(ty);
-        // Attempt to compile the shader
-        let c_str = CString::new(src.as_bytes()).unwrap();
-        gl::ShaderSource(shader, 1, &c_str.as_ptr(), ptr::null());
-        gl::CompileShader(shader);
+        let shader = gl.create_shader(ty).unwrap();
+        gl.shader_source(shader, src);
+        gl.compile_shader(shader);
 
         // Get the compile status
-        let mut status = gl::FALSE as GLint;
-        gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut status);
+        let mut status = gl.get_shader_compile_status(shader);
 
         // Fail on error
-        if status != (gl::TRUE as GLint) {
-            let mut len = 0;
-            gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetShaderInfoLog(
-                shader,
-                len,
-                ptr::null_mut(),
-                buf.as_mut_ptr() as *mut GLchar,
-            );
-            panic!(
-                "{}",
-                str::from_utf8(&buf)
-                    .ok()
-                    .expect("ShaderInfoLog not valid utf8")
-            );
+        if !status {
+            panic!("{}", gl.get_shader_info_log(shader));
         }
+        shader
     }
-    shader
 }
 
-fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
+fn link_program(gl: &glow::Context, vs: glow::Shader, fs: glow::Shader) -> glow::Program {
     unsafe {
-        let program = gl::CreateProgram();
-        gl::AttachShader(program, vs);
-        gl::AttachShader(program, fs);
-        gl::LinkProgram(program);
+        let program = gl.create_program().unwrap();
+        gl.attach_shader(program, vs);
+        gl.attach_shader(program, fs);
+        gl.link_program(program);
         // Get the link status
-        let mut status = gl::FALSE as GLint;
-        gl::GetProgramiv(program, gl::LINK_STATUS, &mut status);
+        let mut status = gl.get_program_link_status(program);
 
         // Fail on error
-        if status != (gl::TRUE as GLint) {
-            let mut len: GLint = 0;
-            gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetProgramInfoLog(
-                program,
-                len,
-                ptr::null_mut(),
-                buf.as_mut_ptr() as *mut GLchar,
-            );
-            panic!(
-                "{}",
-                str::from_utf8(&buf)
-                    .ok()
-                    .expect("ProgramInfoLog not valid utf8")
-            );
+        if !status {
+            panic!("{}", gl.get_program_info_log(program));
         }
         program
     }
 }
 
+fn create_display(
+    event_loop: &glutin::event_loop::EventLoop<()>,
+    title: &str
+) -> (
+    glutin::WindowedContext<glutin::PossiblyCurrent>,
+    glow::Context,
+) {
+    let window_builder = glutin::window::WindowBuilder::new()
+        .with_resizable(true)
+        .with_inner_size(glutin::dpi::LogicalSize {
+            width: 800.0,
+            height: 600.0,
+        })
+        .with_title(title);
+
+    let gl_window = unsafe {
+        glutin::ContextBuilder::new()
+            .with_depth_buffer(0)
+            .with_srgb(true)
+            .with_stencil_buffer(0)
+            .with_vsync(true)
+            .build_windowed(window_builder, event_loop)
+            .unwrap()
+            .make_current()
+            .unwrap()
+    };
+
+    let gl = unsafe { glow::Context::from_loader_function(|s| gl_window.get_proc_address(s)) };
+
+    unsafe {
+        use glow::HasContext as _;
+        gl.enable(glow::FRAMEBUFFER_SRGB);
+    }
+
+    (gl_window, gl)
+}
+
 pub fn run() {
-    let event_loop = glutin::event_loop::EventLoop::new();
-    let window = glutin::window::WindowBuilder::new();
-    let gl_window = glutin::ContextBuilder::new()
-        .build_windowed(window, &event_loop)
-        .unwrap();
+    let event_loop = glutin::event_loop::EventLoop::with_user_event();
 
-    // It is essential to make the context current before calling `gl::load_with`.
-    let gl_window = unsafe { gl_window.make_current() }.unwrap();
+    let (gl_window, gl) = create_display(&event_loop, "title");
 
-    // Load the OpenGL function pointers
-    gl::load_with(|symbol| gl_window.get_proc_address(symbol));
+    let egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
     // Create GLSL shaders
-    let vs = compile_shader(VS_SRC, gl::VERTEX_SHADER);
-    let fs = compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
-    let program = link_program(vs, fs);
-
-    let mut vao = 0;
-    let mut vbo = 0;
-    let mut ibo = 0;
+    let vs = compile_shader(&gl, VS_SRC, glow::VERTEX_SHADER);
+    let fs = compile_shader(&gl, FS_SRC, glow::FRAGMENT_SHADER);
+    let program = link_program(&gl, vs, fs);
 
     unsafe {
         // Create Vertex Array Object
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
+        let vao = gl.create_vertex_array().unwrap();
+        gl.bind_vertex_array(Some(vao));
 
         // Create a Vertex Buffer Object and copy the vertex data to it
-        gl::GenBuffers(1, &mut vbo);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (VERTEX_DATA.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            mem::transmute(&VERTEX_DATA[0]),
-            gl::STATIC_DRAW,
+        let vbo = gl.create_buffer().unwrap();
+        gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
+
+        let vertices_u8: &[u8] = core::slice::from_raw_parts(
+            VERTEX_DATA.as_ptr() as *const u8,
+            VERTEX_DATA.len() * core::mem::size_of::<f32>(),
         );
 
+        gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vertices_u8, glow::STATIC_DRAW);
+
         // Create a Vertex Buffer Object and copy the vertex data to it
-        gl::GenBuffers(1, &mut ibo);
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ibo);
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER,
-            (INDEX_DATA.len() * mem::size_of::<GLint>()) as GLsizeiptr,
-            mem::transmute(&INDEX_DATA[0]),
-            gl::STATIC_DRAW,
+        let ibo = gl.create_buffer().unwrap();
+        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(ibo));
+
+        let indices_u8: &[u8] = core::slice::from_raw_parts(
+            INDEX_DATA.as_ptr() as *const u8,
+            INDEX_DATA.len() * core::mem::size_of::<u32>(),
         );
+
+        gl.buffer_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, indices_u8, glow::STATIC_DRAW);
 
         // Use shader program
-        gl::UseProgram(program);
-        gl::BindFragDataLocation(program, 0, CString::new("a_color").unwrap().as_ptr());
+        gl.use_program(Some(program));
+        gl.bind_frag_data_location(program, 0, "a_color");
 
         // Specify the layout of the vertex data
-        let pos_attr = gl::GetAttribLocation(program, CString::new("a_position").unwrap().as_ptr());
-        gl::EnableVertexAttribArray(pos_attr as GLuint);
-        gl::VertexAttribPointer(
-            pos_attr as GLuint,
+        let pos_attr = gl.get_attrib_location(program, "a_position").unwrap();
+        gl.enable_vertex_attrib_array(pos_attr);
+        gl.vertex_attrib_pointer_f32(
+            pos_attr,
             3,
-            gl::FLOAT,
-            gl::FALSE as GLboolean,
+            glow::FLOAT,
+            false,
             28,
-            0 as *mut c_void,
+            0,
         );
 
         // Specify the layout of the vertex data
-        let pos_attr2 = gl::GetAttribLocation(program, CString::new("a_color").unwrap().as_ptr());
-        gl::EnableVertexAttribArray(pos_attr2 as GLuint);
-        gl::VertexAttribPointer(
-            pos_attr2 as GLuint,
+        let pos_attr2 = gl.get_attrib_location(program, "a_color").unwrap();
+        gl.enable_vertex_attrib_array(pos_attr2);
+        gl.vertex_attrib_pointer_f32(
+            pos_attr2,
             4,
-            gl::FLOAT,
-            gl::FALSE as GLboolean,
+            glow::FLOAT,
+            false,
             28,
-            12 as *mut c_void,
+            12,
         );
     }
 
@@ -205,11 +195,11 @@ pub fn run() {
                 WindowEvent::CloseRequested => {
                     // Cleanup
                     unsafe {
-                        gl::DeleteProgram(program);
-                        gl::DeleteShader(fs);
-                        gl::DeleteShader(vs);
-                        gl::DeleteBuffers(1, &vbo);
-                        gl::DeleteVertexArrays(1, &vao);
+                        // gl::DeleteProgram(program);
+                        // gl::DeleteShader(fs);
+                        // gl::DeleteShader(vs);
+                        // gl::DeleteBuffers(1, &vbo);
+                        // gl::DeleteVertexArrays(1, &vao);
                     }
                     *control_flow = ControlFlow::Exit
                 },
@@ -218,10 +208,10 @@ pub fn run() {
             Event::RedrawRequested(_) => {
                 unsafe {
                     // Clear the screen to black
-                    gl::ClearColor(0.3, 0.3, 0.3, 1.0);
-                    gl::Clear(gl::COLOR_BUFFER_BIT);
+                    gl.clear_color(0.3, 0.3, 0.3, 1.0);
+                    gl.clear(glow::COLOR_BUFFER_BIT);
                     // Draw a triangle from the 3 vertices
-                    gl::DrawElements(gl::TRIANGLES, INDEX_DATA.len() as i32, gl::UNSIGNED_INT, ptr::null());
+                    gl.draw_elements(glow::TRIANGLES, INDEX_DATA.len() as i32, glow::UNSIGNED_INT, 0);
                 }
                 gl_window.swap_buffers().unwrap();
             },
