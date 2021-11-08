@@ -4,7 +4,7 @@ use std::mem;
 use std::ptr;
 use std::str;
 use glow::HasContext;
-use crate::buffer::{VertexBuffer, IndexBuffer};
+use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray};
 
 // Shader sources
 static VS_SRC: &'static str = "
@@ -133,36 +133,14 @@ pub fn run() {
     ];
 
     unsafe {
-        let _vertex_buffer = VertexBuffer::new(&gl, vertices);
+        let mut vertex_array = VertexArray::new(&gl);
+        let vertex_buffer = VertexBuffer::new(&gl, vertices);
         let _index_buffer = IndexBuffer::new(&gl, indices);
 
+        vertex_array.add_vertex_buffer(&gl, vertex_buffer);
         // Use shader program
         gl.use_program(Some(program));
         gl.bind_frag_data_location(program, 0, "a_color");
-
-        // Specify the layout of the vertex data
-        let pos_attr = gl.get_attrib_location(program, "a_position").unwrap();
-        gl.enable_vertex_attrib_array(pos_attr);
-        gl.vertex_attrib_pointer_f32(
-            pos_attr,
-            3,
-            glow::FLOAT,
-            false,
-            28,
-            0,
-        );
-
-        // Specify the layout of the vertex data
-        let pos_attr2 = gl.get_attrib_location(program, "a_color").unwrap();
-        gl.enable_vertex_attrib_array(pos_attr2);
-        gl.vertex_attrib_pointer_f32(
-            pos_attr2,
-            4,
-            glow::FLOAT,
-            false,
-            28,
-            12,
-        );
     }
 
     event_loop.run(move |event, _, control_flow| {

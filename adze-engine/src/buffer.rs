@@ -23,6 +23,18 @@ impl VertexBuffer {
             }
         }
     }
+
+    pub fn bind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.renderer_id));
+        }
+    }
+
+    pub fn unbind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, None);
+        }
+    }
 }
 
 pub struct IndexBuffer {
@@ -45,6 +57,80 @@ impl IndexBuffer {
                 indices,
                 renderer_id
             }
+        }
+    }
+
+    pub fn bind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.renderer_id));
+        }
+    }
+
+    pub fn unbind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
+        }
+    }
+}
+
+pub struct VertexArray {
+    vertex_buffers: Vec<VertexBuffer>,
+    renderer_id: glow::VertexArray
+}
+
+impl VertexArray {
+    pub fn new(gl: &glow::Context) -> VertexArray {
+        unsafe {
+            // Create Vertex Array Object
+            let renderer_id = gl.create_vertex_array().unwrap();
+            gl.bind_vertex_array(Some(renderer_id));
+            VertexArray {
+                vertex_buffers: vec![],
+                renderer_id
+            }
+        }
+    }
+
+    pub fn add_vertex_buffer(&mut self, gl: &glow::Context, buffer: VertexBuffer) {
+        self.bind(gl);
+        buffer.bind(gl);
+
+        unsafe {
+            // Specify the layout of the vertex data
+            gl.enable_vertex_attrib_array(0);
+            gl.vertex_attrib_pointer_f32(
+                0,
+                3,
+                glow::FLOAT,
+                false,
+                28,
+                0,
+            );
+
+            // Specify the layout of the vertex data
+            gl.enable_vertex_attrib_array(1);
+            gl.vertex_attrib_pointer_f32(
+                1,
+                4,
+                glow::FLOAT,
+                false,
+                28,
+                12,
+            );
+
+            self.vertex_buffers.push(buffer);
+        }
+    }
+
+    pub fn bind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_vertex_array(Some(self.renderer_id));
+        }
+    }
+
+    pub fn unbind(&self, gl: &glow::Context) {
+        unsafe {
+            gl.bind_vertex_array(None);
         }
     }
 }
