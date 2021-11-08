@@ -1,10 +1,13 @@
 mod buffer;
+mod shader;
+
 use std::ffi::{CString, c_void};
 use std::mem;
 use std::ptr;
 use std::str;
 use glow::HasContext;
 use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
+use crate::shader::Shader;
 
 // Shader sources
 static VS_SRC: &'static str = "
@@ -66,40 +69,6 @@ const SQUARE_FS_SRC: &str = "
         }
 ";
 
-fn compile_shader(gl: &glow::Context, src: &str, ty: u32) -> glow::Shader {
-    unsafe {
-        let shader = gl.create_shader(ty).unwrap();
-        gl.shader_source(shader, src);
-        gl.compile_shader(shader);
-
-        // Get the compile status
-        let mut status = gl.get_shader_compile_status(shader);
-
-        // Fail on error
-        if !status {
-            panic!("{}", gl.get_shader_info_log(shader));
-        }
-        shader
-    }
-}
-
-fn link_program(gl: &glow::Context, vs: glow::Shader, fs: glow::Shader) -> glow::Program {
-    unsafe {
-        let program = gl.create_program().unwrap();
-        gl.attach_shader(program, vs);
-        gl.attach_shader(program, fs);
-        gl.link_program(program);
-        // Get the link status
-        let mut status = gl.get_program_link_status(program);
-
-        // Fail on error
-        if !status {
-            panic!("{}", gl.get_program_info_log(program));
-        }
-        program
-    }
-}
-
 fn create_display(
     event_loop: &glutin::event_loop::EventLoop<()>,
     title: &str
@@ -144,14 +113,8 @@ pub fn run() {
 
     let egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
-    // Create GLSL shaders
-    let vs = compile_shader(&gl, VS_SRC, glow::VERTEX_SHADER);
-    let fs = compile_shader(&gl, FS_SRC, glow::FRAGMENT_SHADER);
-    let program = link_program(&gl, vs, fs);
-
-    let square_vs = compile_shader(&gl, SQUARE_VS_SRC, glow::VERTEX_SHADER);
-    let square_fs = compile_shader(&gl, SQUARE_FS_SRC, glow::FRAGMENT_SHADER);
-    let square_program = link_program(&gl, square_vs, square_fs);
+    let shader = Shader::new(&gl, VS_SRC, FS_SRC);
+    let square_shader = Shader::new(&gl, SQUARE_VS_SRC, SQUARE_FS_SRC);
 
     let vertices = vec![
         -0.5, -0.5, 0.0, 0.8, 0.2, 0.8, 1.0,
@@ -198,12 +161,6 @@ pub fn run() {
     let square_indices = vec![ 0, 1, 2, 2, 3, 0 ];
     let square_index_buffer = IndexBuffer::new(&gl, square_indices);
 
-    unsafe {
-        // Use shader program
-        gl.use_program(Some(program));
-        gl.bind_frag_data_location(program, 0, "a_color");
-    }
-
     event_loop.run(move |event, _, control_flow| {
         use glutin::event::{Event, WindowEvent};
         use glutin::event_loop::ControlFlow;
@@ -230,11 +187,11 @@ pub fn run() {
                     gl.clear_color(0.3, 0.3, 0.3, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT);
                     // Draw a triangle from the 3 vertices
-                    gl.use_program(Some(square_program));
+                    square_shader.bind(&gl);
                     square_vertex_array.bind(&gl);
                     gl.draw_elements(glow::TRIANGLES, 6 as i32, glow::UNSIGNED_INT, 0);
 
-                    gl.use_program(Some(program));
+                    shader.bind(&gl);
                     vertex_array.bind(&gl);
                     gl.draw_elements(glow::TRIANGLES, 3, glow::UNSIGNED_INT, 0);
                 }
