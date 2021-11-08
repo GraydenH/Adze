@@ -4,7 +4,7 @@ use std::mem;
 use std::ptr;
 use std::str;
 use glow::HasContext;
-use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray};
+use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
 
 // Shader sources
 static VS_SRC: &'static str = "
@@ -134,7 +134,15 @@ pub fn run() {
 
     unsafe {
         let mut vertex_array = VertexArray::new(&gl);
-        let vertex_buffer = VertexBuffer::new(&gl, vertices);
+
+        let layout = BufferLayout::new(
+            vec![
+                BufferElement::new("a_position".parse().unwrap(), ShaderDataType::Float3, false),
+                BufferElement::new("a_color".parse().unwrap(), ShaderDataType::Float4, false),
+            ]
+        );
+
+        let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
         let _index_buffer = IndexBuffer::new(&gl, indices);
 
         vertex_array.add_vertex_buffer(&gl, vertex_buffer);

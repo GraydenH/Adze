@@ -1,13 +1,124 @@
 use core::mem;
 use glow::{HasContext, Buffer};
+#[derive(Clone, Copy)]
+pub enum ShaderDataType {
+    None = 0,
+    Float1,
+    Float2,
+    Float3,
+    Float4,
+    Matrix3,
+    Matrix4,
+    Integer1,
+    Integer2,
+    Integer3,
+    Integer4,
+    Boolean
+}
+
+pub struct BufferElement {
+    name: String,
+    offset: i32,
+    size: i32,
+    data_type: ShaderDataType,
+    normalized: bool
+}
+
+
+fn get_shader_data_type_size(data_type: ShaderDataType) -> i32 {
+    return match data_type {
+        ShaderDataType::Float1 => 4,
+        ShaderDataType::Float2 => 4 * 2,
+        ShaderDataType::Float3 => 4 * 3,
+        ShaderDataType::Float4 => 4 * 4,
+        ShaderDataType::Matrix3 => 3 * 3 * 3,
+        ShaderDataType::Matrix4 => 4 * 4 * 4,
+        ShaderDataType::Integer1 => 4,
+        ShaderDataType::Integer2 => 4 * 2,
+        ShaderDataType::Integer3 => 4 * 3,
+        ShaderDataType::Integer4 => 4 * 4,
+        ShaderDataType::Boolean => 1,
+        _ => 0
+    };
+}
+
+impl BufferElement {
+    pub fn new(name: String, data_type: ShaderDataType, normalized: bool) -> BufferElement {
+        BufferElement {
+            name,
+            data_type,
+            size: get_shader_data_type_size(data_type),
+            normalized,
+            offset: 0
+        }
+    }
+
+    fn get_component_count(&self) -> i32 {
+        return match self.data_type {
+            ShaderDataType::Float1 => 1,
+            ShaderDataType::Float2 => 2,
+            ShaderDataType::Float3 => 3,
+            ShaderDataType::Float4 => 4,
+            ShaderDataType::Matrix3 => 3 * 3,
+            ShaderDataType::Matrix4 => 4 * 4,
+            ShaderDataType::Integer1 => 1,
+            ShaderDataType::Integer2 => 2,
+            ShaderDataType::Integer3 => 3,
+            ShaderDataType::Integer4 => 4,
+            ShaderDataType::Boolean => 1,
+            _ => 0 // error?
+        };
+    }
+}
+
+fn to_opengl_type(data_type: ShaderDataType) -> u32 {
+    return match data_type {
+        ShaderDataType::Float1 => glow::FLOAT,
+        ShaderDataType::Float2 => glow::FLOAT,
+        ShaderDataType::Float3 => glow::FLOAT,
+        ShaderDataType::Float4 => glow::FLOAT,
+        ShaderDataType::Matrix3 => glow::FLOAT,
+        ShaderDataType::Matrix4 => glow::FLOAT,
+        ShaderDataType::Integer1 => glow::INT,
+        ShaderDataType::Integer2 => glow::INT,
+        ShaderDataType::Integer3 => glow::INT,
+        ShaderDataType::Integer4 => glow::INT,
+        ShaderDataType::Boolean => glow::BOOL,
+        _ => 0 // throw error?
+    };
+}
+
+pub struct BufferLayout {
+    elements: Vec<BufferElement>,
+    stride: i32
+}
+
+impl BufferLayout {
+    pub fn new(mut elements: Vec<BufferElement>) -> BufferLayout {
+        let mut offset: i32 = 0;
+        let mut stride: i32 = 0;
+
+        for element in elements.iter_mut() {
+            element.offset = offset;
+            offset += element.size;
+            stride += element.size;
+        }
+
+        BufferLayout {
+            elements,
+            stride
+        }
+    }
+}
 
 pub struct VertexBuffer {
     vertices: Vec<f32>,
+    layout: BufferLayout,
     renderer_id: Buffer
 }
 
 impl VertexBuffer {
-    pub fn new(gl: &glow::Context, vertices: Vec<f32>) -> VertexBuffer {
+    pub fn new(gl: &glow::Context, vertices: Vec<f32>, layout: BufferLayout) -> VertexBuffer {
         unsafe {
             let renderer_id = gl.create_buffer().unwrap();
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(renderer_id));
@@ -19,6 +130,7 @@ impl VertexBuffer {
             gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vertices_u8, glow::STATIC_DRAW);
             VertexBuffer {
                 vertices,
+                layout,
                 renderer_id
             }
         }
@@ -96,27 +208,18 @@ impl VertexArray {
         buffer.bind(gl);
 
         unsafe {
-            // Specify the layout of the vertex data
-            gl.enable_vertex_attrib_array(0);
-            gl.vertex_attrib_pointer_f32(
-                0,
-                3,
-                glow::FLOAT,
-                false,
-                28,
-                0,
-            );
-
-            // Specify the layout of the vertex data
-            gl.enable_vertex_attrib_array(1);
-            gl.vertex_attrib_pointer_f32(
-                1,
-                4,
-                glow::FLOAT,
-                false,
-                28,
-                12,
-            );
+            for (index, element) in buffer.layout.elements.iter().enumerate() {
+                // Specify the layout of the vertex data
+                gl.enable_vertex_attrib_array(index as u32);
+                gl.vertex_attrib_pointer_f32(
+                    index as u32,
+                    element.get_component_count(),
+                    to_opengl_type(element.data_type),
+                    false,
+                    buffer.layout.stride,
+                    element.offset,
+                );
+            }
 
             self.vertex_buffers.push(buffer);
         }
