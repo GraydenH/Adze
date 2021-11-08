@@ -1,5 +1,6 @@
 mod buffer;
 mod shader;
+mod renderer;
 pub mod app;
 
 #[cfg(test)]

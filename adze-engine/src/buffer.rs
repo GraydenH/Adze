@@ -1,5 +1,7 @@
 use core::mem;
 use glow::{HasContext, Buffer};
+use crate::buffer;
+
 #[derive(Clone, Copy)]
 pub enum ShaderDataType {
     None = 0,
@@ -191,17 +193,20 @@ impl IndexBuffer {
 
 pub struct VertexArray {
     vertex_buffers: Vec<VertexBuffer>,
+    index_buffer: buffer::IndexBuffer,
     renderer_id: glow::VertexArray
 }
 
 impl VertexArray {
-    pub fn new(gl: &glow::Context) -> VertexArray {
+    pub fn new(gl: &glow::Context, index_buffer: buffer::IndexBuffer) -> VertexArray {
         unsafe {
             // Create Vertex Array Object
             let renderer_id = gl.create_vertex_array().unwrap();
             gl.bind_vertex_array(Some(renderer_id));
+            index_buffer.bind(gl);
             VertexArray {
                 vertex_buffers: vec![],
+                index_buffer,
                 renderer_id
             }
         }
@@ -227,6 +232,10 @@ impl VertexArray {
 
             self.vertex_buffers.push(buffer);
         }
+    }
+
+    pub fn get_indices_len(&self) -> usize {
+        self.index_buffer.get_indices_len()
     }
 
     pub fn bind(&self, gl: &glow::Context) {

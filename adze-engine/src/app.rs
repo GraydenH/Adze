@@ -2,6 +2,7 @@ use std::str;
 use glow::HasContext;
 use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
 use crate::shader::Shader;
+use crate::renderer::Renderer;
 
 // Shader sources
 static VS_SRC: &'static str = "
@@ -118,6 +119,8 @@ impl App {
 
         let egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
+        let renderer = Renderer::new();
+
         let shader = Shader::new(&gl, VS_SRC, FS_SRC);
         let square_shader = Shader::new(&gl, SQUARE_VS_SRC, SQUARE_FS_SRC);
 
@@ -131,7 +134,6 @@ impl App {
             0, 1, 2
         ];
 
-        let mut vertex_array = VertexArray::new(&gl);
 
         let layout = BufferLayout::new(
             vec![
@@ -143,6 +145,7 @@ impl App {
         let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
         let index_buffer = IndexBuffer::new(&gl, indices);
 
+        let mut vertex_array = VertexArray::new(&gl, index_buffer);
         vertex_array.add_vertex_buffer(&gl, vertex_buffer);
 
         let square_vertices = vec![
@@ -152,8 +155,6 @@ impl App {
             -0.75, 0.75, 0.0
         ];
 
-        let mut square_vertex_array = VertexArray::new(&gl);
-
         let square_layout = BufferLayout::new(
             vec![
                 BufferElement::new("a_position".parse().unwrap(), ShaderDataType::Float3, false)
@@ -161,10 +162,12 @@ impl App {
         );
 
         let square_vertex_buffer = VertexBuffer::new(&gl, square_vertices, square_layout);
-        square_vertex_array.add_vertex_buffer(&gl, square_vertex_buffer);
 
         let square_indices = vec![0, 1, 2, 2, 3, 0];
         let square_index_buffer = IndexBuffer::new(&gl, square_indices);
+
+        let mut square_vertex_array = VertexArray::new(&gl, square_index_buffer);
+        square_vertex_array.add_vertex_buffer(&gl, square_vertex_buffer);
 
         event_loop.run(move |event, _, control_flow| {
             use glutin::event::{Event, WindowEvent};
@@ -187,19 +190,17 @@ impl App {
                     _ => (),
                 },
                 Event::RedrawRequested(_) => {
-                    unsafe {
-                        // Clear the screen to black
-                        gl.clear_color(0.3, 0.3, 0.3, 1.0);
-                        gl.clear(glow::COLOR_BUFFER_BIT);
-                        // Draw a triangle from the 3 vertices
-                        square_shader.bind(&gl);
-                        square_vertex_array.bind(&gl);
-                        gl.draw_elements(glow::TRIANGLES, square_index_buffer.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
+                    renderer.clear(&gl);
+                    renderer.begin();
 
-                        shader.bind(&gl);
-                        vertex_array.bind(&gl);
-                        gl.draw_elements(glow::TRIANGLES, index_buffer.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
-                    }
+                    square_shader.bind(&gl);
+                    renderer.draw(&gl, &square_vertex_array);
+
+                    shader.bind(&gl);
+                    renderer.draw(&gl, &vertex_array);
+
+                    renderer.end();
+
                     gl_window.swap_buffers().unwrap();
                 },
                 _ => (),
