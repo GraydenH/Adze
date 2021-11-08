@@ -172,6 +172,10 @@ impl IndexBuffer {
         }
     }
 
+    pub fn get_indices_len(&self) -> usize {
+        self.indices.len()
+    }
+
     pub fn bind(&self, gl: &glow::Context) {
         unsafe {
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.renderer_id));

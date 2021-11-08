@@ -136,7 +136,7 @@ pub fn run() {
     );
 
     let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
-    let _index_buffer = IndexBuffer::new(&gl, indices);
+    let index_buffer = IndexBuffer::new(&gl, indices);
 
     vertex_array.add_vertex_buffer(&gl, vertex_buffer);
 
@@ -189,11 +189,11 @@ pub fn run() {
                     // Draw a triangle from the 3 vertices
                     square_shader.bind(&gl);
                     square_vertex_array.bind(&gl);
-                    gl.draw_elements(glow::TRIANGLES, 6 as i32, glow::UNSIGNED_INT, 0);
+                    gl.draw_elements(glow::TRIANGLES, square_index_buffer.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
 
                     shader.bind(&gl);
                     vertex_array.bind(&gl);
-                    gl.draw_elements(glow::TRIANGLES, 3, glow::UNSIGNED_INT, 0);
+                    gl.draw_elements(glow::TRIANGLES, index_buffer.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
                 }
                 gl_window.swap_buffers().unwrap();
             },
