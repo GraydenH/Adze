@@ -1,18 +1,11 @@
+mod buffer;
 use std::ffi::{CString, c_void};
 use std::mem;
 use std::ptr;
 use std::str;
 use glow::HasContext;
+use crate::buffer::{VertexBuffer, IndexBuffer};
 
-// Vertex data
-static VERTEX_DATA: [f32; 7 * 3] = [
-    -0.5, -0.5, 0.0, 0.8, 0.2, 0.8, 1.0,
-     0.5, -0.5, 0.0, 0.2, 0.3, 0.8, 1.0,
-     0.0,  0.5, 0.0, 0.8, 0.8, 0.2, 1.0
-];
-static INDEX_DATA: [u32; 3] = [
-    0, 1, 2
-];
 // Shader sources
 static VS_SRC: &'static str = "
         #version 330 core
@@ -129,32 +122,19 @@ pub fn run() {
     let fs = compile_shader(&gl, FS_SRC, glow::FRAGMENT_SHADER);
     let program = link_program(&gl, vs, fs);
 
+    let vertices = vec![
+        -0.5, -0.5, 0.0, 0.8, 0.2, 0.8, 1.0,
+         0.5, -0.5, 0.0, 0.2, 0.3, 0.8, 1.0,
+         0.0,  0.5, 0.0, 0.8, 0.8, 0.2, 1.0
+    ];
+
+    let indices = vec![
+        0, 1, 2
+    ];
+
     unsafe {
-        // Create Vertex Array Object
-        let vao = gl.create_vertex_array().unwrap();
-        gl.bind_vertex_array(Some(vao));
-
-        // Create a Vertex Buffer Object and copy the vertex data to it
-        let vbo = gl.create_buffer().unwrap();
-        gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
-
-        let vertices_u8: &[u8] = core::slice::from_raw_parts(
-            VERTEX_DATA.as_ptr() as *const u8,
-            VERTEX_DATA.len() * core::mem::size_of::<f32>(),
-        );
-
-        gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vertices_u8, glow::STATIC_DRAW);
-
-        // Create a Vertex Buffer Object and copy the vertex data to it
-        let ibo = gl.create_buffer().unwrap();
-        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(ibo));
-
-        let indices_u8: &[u8] = core::slice::from_raw_parts(
-            INDEX_DATA.as_ptr() as *const u8,
-            INDEX_DATA.len() * core::mem::size_of::<u32>(),
-        );
-
-        gl.buffer_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, indices_u8, glow::STATIC_DRAW);
+        let _vertex_buffer = VertexBuffer::new(&gl, vertices);
+        let _index_buffer = IndexBuffer::new(&gl, indices);
 
         // Use shader program
         gl.use_program(Some(program));
@@ -211,7 +191,7 @@ pub fn run() {
                     gl.clear_color(0.3, 0.3, 0.3, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT);
                     // Draw a triangle from the 3 vertices
-                    gl.draw_elements(glow::TRIANGLES, INDEX_DATA.len() as i32, glow::UNSIGNED_INT, 0);
+                    gl.draw_elements(glow::TRIANGLES, 3, glow::UNSIGNED_INT, 0);
                 }
                 gl_window.swap_buffers().unwrap();
             },
