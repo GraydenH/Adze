@@ -24,7 +24,7 @@ static VS_SRC: &'static str = "
         }
 ";
 
-static FS_SRC: &'static str = "
+const FS_SRC: &'static str = "
         #version 330 core
 
         layout(location = 0) out vec4 color;
@@ -36,6 +36,33 @@ static FS_SRC: &'static str = "
         {
             color = vec4(v_position * 0.5 + 0.5, 1.0);
             color = v_color;
+        }
+";
+
+const SQUARE_VS_SRC: &str = "
+        #version 330 core
+
+        layout(location = 0) in vec3 a_position;
+
+        out vec3 v_Position;
+
+        void main()
+        {
+            v_Position = a_position;
+            gl_Position = vec4(a_position, 1.0);
+        }
+";
+
+const SQUARE_FS_SRC: &str = "
+        #version 330 core
+
+        layout(location = 0) out vec4 color;
+
+        in vec3 v_Position;
+
+        void main()
+        {
+            color = vec4(0.2, 0.3, 0.8, 1.0);
         }
 ";
 
@@ -122,6 +149,10 @@ pub fn run() {
     let fs = compile_shader(&gl, FS_SRC, glow::FRAGMENT_SHADER);
     let program = link_program(&gl, vs, fs);
 
+    let square_vs = compile_shader(&gl, SQUARE_VS_SRC, glow::VERTEX_SHADER);
+    let square_fs = compile_shader(&gl, SQUARE_FS_SRC, glow::FRAGMENT_SHADER);
+    let square_program = link_program(&gl, square_vs, square_fs);
+
     let vertices = vec![
         -0.5, -0.5, 0.0, 0.8, 0.2, 0.8, 1.0,
          0.5, -0.5, 0.0, 0.2, 0.3, 0.8, 1.0,
@@ -132,20 +163,42 @@ pub fn run() {
         0, 1, 2
     ];
 
+    let mut vertex_array = VertexArray::new(&gl);
+
+    let layout = BufferLayout::new(
+        vec![
+            BufferElement::new("a_position".parse().unwrap(), ShaderDataType::Float3, false),
+            BufferElement::new("a_color".parse().unwrap(), ShaderDataType::Float4, false),
+        ]
+    );
+
+    let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
+    let _index_buffer = IndexBuffer::new(&gl, indices);
+
+    vertex_array.add_vertex_buffer(&gl, vertex_buffer);
+
+    let square_vertices = vec![
+        -0.75, -0.75, 0.0,
+        0.75, -0.75, 0.0,
+        0.75,  0.75, 0.0,
+        -0.75,  0.75, 0.0
+    ];
+
+    let mut square_vertex_array = VertexArray::new(&gl);
+
+    let square_layout = BufferLayout::new(
+        vec![
+            BufferElement::new("a_position".parse().unwrap(), ShaderDataType::Float3, false)
+        ]
+    );
+
+    let square_vertex_buffer = VertexBuffer::new(&gl, square_vertices, square_layout);
+    square_vertex_array.add_vertex_buffer(&gl, square_vertex_buffer);
+
+    let square_indices = vec![ 0, 1, 2, 2, 3, 0 ];
+    let square_index_buffer = IndexBuffer::new(&gl, square_indices);
+
     unsafe {
-        let mut vertex_array = VertexArray::new(&gl);
-
-        let layout = BufferLayout::new(
-            vec![
-                BufferElement::new("a_position".parse().unwrap(), ShaderDataType::Float3, false),
-                BufferElement::new("a_color".parse().unwrap(), ShaderDataType::Float4, false),
-            ]
-        );
-
-        let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
-        let _index_buffer = IndexBuffer::new(&gl, indices);
-
-        vertex_array.add_vertex_buffer(&gl, vertex_buffer);
         // Use shader program
         gl.use_program(Some(program));
         gl.bind_frag_data_location(program, 0, "a_color");
@@ -177,6 +230,12 @@ pub fn run() {
                     gl.clear_color(0.3, 0.3, 0.3, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT);
                     // Draw a triangle from the 3 vertices
+                    gl.use_program(Some(square_program));
+                    square_vertex_array.bind(&gl);
+                    gl.draw_elements(glow::TRIANGLES, 6 as i32, glow::UNSIGNED_INT, 0);
+
+                    gl.use_program(Some(program));
+                    vertex_array.bind(&gl);
                     gl.draw_elements(glow::TRIANGLES, 3, glow::UNSIGNED_INT, 0);
                 }
                 gl_window.swap_buffers().unwrap();
