@@ -1,6 +1,6 @@
-use adze_engine::run;
+use adze_engine::app::App;
 
 fn main() {
-    println!("Hello, world!");
-    run();
+    let app = App::new("adze app");
+    app.run();
 }
