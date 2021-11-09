@@ -4,6 +4,7 @@ use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, Buffer
 use crate::shader::Shader;
 use crate::renderer::Renderer;
 use crate::layer::{LayerStack, Layer};
+use std::time::Instant;
 
 fn create_display(
     event_loop: &glutin::event_loop::EventLoop<()>,
@@ -69,11 +70,28 @@ impl App {
         let mut renderer = Renderer::new(gl);
         let mut layer_stack = self.layer_stack;
 
+        let clock = Instant::now();
+        let fixed_timestep = 1.0 / 60.0;
+        let mut elapsed_time = 0.0;
+        let mut dt = clock.elapsed().as_secs_f32() - elapsed_time;
+
         event_loop.run(move |event, _, control_flow| {
             use glutin::event::{Event, WindowEvent};
             use glutin::event_loop::ControlFlow;
             *control_flow = ControlFlow::Wait;
             match event {
+                Event::MainEventsCleared => {
+                    dt = clock.elapsed().as_secs_f32() - elapsed_time;
+                    while dt >= fixed_timestep {
+                        dt -= fixed_timestep;
+                        elapsed_time += fixed_timestep;
+
+                        for layer in layer_stack.iter_mut().rev() {
+                            layer.on_tick(&mut renderer);
+                        }
+                    }
+                    window.window().request_redraw();
+                },
                 Event::LoopDestroyed => return,
                 Event::WindowEvent { event, .. } => match event {
                     WindowEvent::CloseRequested => {
@@ -90,9 +108,6 @@ impl App {
                     _ => (),
                 },
                 Event::RedrawRequested(_) => {
-                    for layer in layer_stack.iter_mut().rev() {
-                        layer.on_tick(&mut renderer);
-                    }
 
                     gl_window.swap_buffers().unwrap();
                 },
