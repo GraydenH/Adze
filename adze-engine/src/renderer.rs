@@ -3,6 +3,9 @@ use core::ptr;
 use glow::HasContext;
 use crate::buffer;
 use crate::shader::Shader;
+use crate::camera::OrthographicCamera;
+use nalgebra_glm::Mat4;
+use nalgebra_glm as glm;
 
 // Shader sources
 static VS_SRC: &'static str = "
@@ -14,11 +17,13 @@ static VS_SRC: &'static str = "
         out vec3 v_position;
         out vec4 v_color;
 
+        uniform mat4 uprojection_view;
+
         void main()
         {
             v_position = a_position;
             v_color = a_color;
-            gl_Position = vec4(a_position, 1.0);
+            gl_Position = uprojection_view * vec4(a_position, 1.0);
         }
 ";
 
@@ -44,10 +49,12 @@ const SQUARE_VS_SRC: &str = "
 
         out vec3 v_Position;
 
+        uniform mat4 uprojection_view;
+
         void main()
         {
             v_Position = a_position;
-            gl_Position = vec4(a_position, 1.0);
+            gl_Position = uprojection_view * vec4(a_position, 1.0);
         }
 ";
 
@@ -70,6 +77,7 @@ pub struct Renderer {
     shader: Shader,
     square_vertex_array: VertexArray,
     square_shader: Shader,
+    projection_view: Mat4
 }
 
 impl Renderer {
@@ -125,12 +133,13 @@ impl Renderer {
             vertex_array,
             shader,
             square_vertex_array,
-            square_shader
+            square_shader,
+            projection_view: glm::identity()
         }
     }
 
-    pub fn begin(&self) {
-
+    pub fn begin(&mut self, camera: &OrthographicCamera) {
+        self.projection_view = camera.get_projection_view();
     }
 
     pub fn end(&self) {
@@ -148,6 +157,7 @@ impl Renderer {
     pub fn draw_triangle(&self) {
         self.vertex_array.bind(&self.gl);
         self.shader.bind(&self.gl);
+        self.shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
         unsafe {
             self.gl.draw_elements(glow::TRIANGLES, self.vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
         }
@@ -156,6 +166,7 @@ impl Renderer {
     pub fn draw_square(&self) {
         self.square_vertex_array.bind(&self.gl);
         self.square_shader.bind(&self.gl);
+        self.square_shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
         unsafe {
             self.gl.draw_elements(glow::TRIANGLES, self.square_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
         }

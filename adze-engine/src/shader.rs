@@ -1,4 +1,5 @@
 use glow::HasContext;
+use nalgebra_glm::Mat4;
 
 fn compile_shader(gl: &glow::Context, src: &str, ty: u32) -> glow::Shader {
     unsafe {
@@ -45,6 +46,13 @@ impl Shader {
         let renderer_id = link_program(gl, vs, fs);
         Shader {
             renderer_id
+        }
+    }
+
+    pub fn upload_uniform_mat4(&self, gl: &glow::Context, name: &str, matrix: &Mat4) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_matrix_4_f32_slice(Some(&location), false, matrix.as_slice());
         }
     }
 

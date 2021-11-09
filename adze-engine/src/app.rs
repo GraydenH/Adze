@@ -66,7 +66,7 @@ impl App {
 
         let egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
-        let renderer = Renderer::new(gl);
+        let mut renderer = Renderer::new(gl);
         let mut layer_stack = self.layer_stack;
 
         event_loop.run(move |event, _, control_flow| {
@@ -91,7 +91,7 @@ impl App {
                 },
                 Event::RedrawRequested(_) => {
                     for layer in layer_stack.iter_mut().rev() {
-                        layer.on_tick(&renderer);
+                        layer.on_tick(&mut renderer);
                     }
 
                     gl_window.swap_buffers().unwrap();
