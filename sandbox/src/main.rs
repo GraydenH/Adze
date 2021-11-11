@@ -5,6 +5,7 @@ use adze_engine::layer::Layer;
 use adze_engine::camera::OrthographicCamera;
 use adze_engine::glm;
 use adze_engine::glutin::event::VirtualKeyCode;
+use adze_engine::glm::Mat4;
 
 pub struct Sandbox {
     camera: OrthographicCamera
@@ -41,9 +42,17 @@ impl EventListener for Sandbox {
 
         renderer.begin(&self.camera);
 
-        renderer.draw_square();
+        let scale = glm::scale(&glm::identity(), &glm::vec3(0.1, 0.1, 0.1));
 
-        renderer.draw_triangle();
+        for y in 0..20 {
+            for x in 0..20 {
+                let pos = glm::vec3((x as f32) * 0.11, (y as f32) * 0.11, 0.0);
+                let transform = glm::translate(&glm::identity(), &pos) * scale;
+                renderer.draw_square(&transform);
+            }
+        }
+
+        renderer.draw_triangle(&glm::identity());
 
         renderer.end();
     }
