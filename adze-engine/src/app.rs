@@ -5,6 +5,10 @@ use crate::shader::Shader;
 use crate::renderer::Renderer;
 use crate::layer::{LayerStack, Layer};
 use std::time::Instant;
+use glutin::event::{DeviceEvent, VirtualKeyCode};
+use crate::glutin::event::ElementState;
+
+pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
 
 fn create_display(
     event_loop: &glutin::event_loop::EventLoop<()>,
@@ -60,6 +64,10 @@ impl App {
         self.layer_stack.push_layer(layer);
     }
 
+    pub fn is_key_pressed(key_code: VirtualKeyCode) -> bool {
+        unsafe { return KEY_PRESSED [key_code as usize]; }
+    }
+
     pub fn run(self) {
         let event_loop = glutin::event_loop::EventLoop::with_user_event();
 
@@ -90,9 +98,32 @@ impl App {
                             layer.on_tick(&mut renderer);
                         }
                     }
-                    window.window().request_redraw();
+                    gl_window.window().request_redraw();
                 },
                 Event::LoopDestroyed => return,
+                Event::DeviceEvent { event, ..} => match event {
+                    DeviceEvent::Key(input) => unsafe {
+                        if let Some(keycode) = input.virtual_keycode {
+                            let index = keycode as u16;
+
+                            if input.state == ElementState::Pressed {
+                                let repeat = KEY_PRESSED[index as usize];
+                                KEY_PRESSED[index as usize] = true;
+                                for layer in layer_stack.iter_mut().rev() {
+                                    layer.on_key_press(keycode, repeat);
+                                }
+                            } else {
+                                KEY_PRESSED[index as usize] = false;
+                                for layer in layer_stack.iter_mut().rev() {
+                                    layer.on_key_release(keycode);
+                                }
+                            };
+
+                            gl_window.window().request_redraw();
+                        }
+                    }
+                    _ => {}
+                },
                 Event::WindowEvent { event, .. } => match event {
                     WindowEvent::CloseRequested => {
                         // Cleanup

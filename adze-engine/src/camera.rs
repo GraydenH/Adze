@@ -1,5 +1,6 @@
 use nalgebra_glm as glm;
 use glm::{Mat4, Vec3, Vec2};
+use crate::app::App;
 
 pub struct OrthographicCamera {
     projection: Mat4,
