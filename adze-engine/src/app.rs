@@ -130,6 +130,9 @@ impl App {
                     _ => {}
                 },
                 Event::WindowEvent { event, .. } => match event {
+                    WindowEvent::Resized(size) => {
+                        renderer.set_viewport(0, 0, size.width, size.height);
+                    },
                     WindowEvent::MouseWheel { delta, .. } => {
                         let delta = match delta {
                             LineDelta(x, y) => glm::vec2(x, y),

@@ -140,6 +140,12 @@ impl Renderer {
         }
     }
 
+    pub fn set_viewport(&self, x: u32, y: u32, width: u32, height: u32) {
+        unsafe {
+            self.gl.viewport(x as i32, y as i32, width as i32, height as i32);
+        }
+    }
+
     pub fn draw_flat_color_quad(&self, transform: &Mat4, color: &Vec3) {
         self.quad_vertex_array.bind(&self.gl);
         self.flat_color_shader.bind(&self.gl);
