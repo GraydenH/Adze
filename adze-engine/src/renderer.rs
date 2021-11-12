@@ -109,6 +109,12 @@ impl Renderer {
 
         let mut quad_vertex_array = VertexArray::new(&gl, square_index_buffer);
         quad_vertex_array.add_vertex_buffer(&gl, vertex_buffer);
+
+        unsafe {
+            gl.enable(glow::BLEND);
+            gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+        }
+
         Renderer {
             gl,
             quad_vertex_array,
@@ -153,54 +159,13 @@ impl Renderer {
         self.texture_shader.upload_uniform_integer1(&self.gl, "utexture", 0);
 
         if texture.get_renderer_id() == None {
-            self.init_texture(texture);
+            texture.init(&self.gl);
         }
 
-        self.bind_texture(texture, 0);
+        texture.bind(&self.gl, 0);
 
         unsafe {
             self.gl.draw_elements(glow::TRIANGLES, self.quad_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
-        }
-    }
-
-    // https://www.reddit.com/r/rust/comments/7me7zr/using_image_crate_to_load_an_image_and_use_it_as/
-    fn init_texture(&self, texture: &mut Texture) {
-        match image::open(String::from(texture.get_path())) {
-            Err(err) => panic!("Could not load image {}: {}", texture.get_path(), err),
-            Ok(img) => unsafe {
-                let (width, height) = img.dimensions();
-
-                let image = match img {
-                    DynamicImage::ImageRgb8(img) => img,
-                    img => img.to_rgb8()
-                };
-
-                let img_data = image.into_raw();
-
-                let renderer_id = self.gl.create_texture().unwrap();
-                self.gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
-                self.gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::RGB8, width as i32, height as i32);
-
-                self.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
-                self.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
-                self.gl.tex_sub_image_2d(glow::TEXTURE_2D,0, 0, 0, width as i32, height as i32, glow::RGB, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(img_data.as_slice()));
-
-                texture.set_renderer_id(renderer_id);
-            }
-        }
-    }
-
-    fn bind_texture(&self, texture: &Texture, slot: u32) {
-        unsafe {
-            self.gl.active_texture(slot);
-            self.gl.bind_texture(glow::TEXTURE_2D, texture.get_renderer_id());
-        }
-    }
-
-    fn unbind_texture(&self, slot: u32) {
-        unsafe {
-            self.gl.active_texture(slot);
-            self.gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }
 }

@@ -10,15 +10,18 @@ use adze_engine::texture::Texture;
 
 pub struct Sandbox {
     camera: OrthographicCamera,
-    texture: Texture
+    checker_board_texture: Texture,
+    cherno_logo_texture: Texture
 }
 
 impl Sandbox {
     pub fn new() -> Self {
-        let texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"));
+        let checker_board_texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"));
+        let cherno_logo_texture = Texture::new(String::from("sandbox/assets/textures/ChernoLogo.png"));
         Sandbox {
             camera: OrthographicCamera::new(-1.0, 1.0, -1.0, 1.0),
-            texture
+            checker_board_texture,
+            cherno_logo_texture
         }
     }
 
@@ -46,7 +49,7 @@ impl EventListener for Sandbox {
 
         renderer.begin(&self.camera);
 
-        renderer.draw_quad_with_texture(&glm::identity(), &mut self.texture);
+        renderer.draw_quad_with_texture(&glm::identity(), &mut self.checker_board_texture);
 
         let scale = glm::scale(&glm::identity(), &glm::vec3(0.1, 0.1, 0.1));
 
@@ -57,6 +60,8 @@ impl EventListener for Sandbox {
                 renderer.draw_flat_color_quad(&transform, &glm::vec3((x as f32) * 0.05, (x as f32) * 0.05, (x + y) as f32 * 0.01));
             }
         }
+
+        renderer.draw_quad_with_texture(&glm::identity(), &mut self.cherno_logo_texture);
 
         renderer.end();
     }
