@@ -1,6 +1,7 @@
 use nalgebra_glm as glm;
 use glm::{Mat4, Vec3, Vec2};
 use crate::app::App;
+use crate::glutin::event::VirtualKeyCode;
 
 pub struct OrthographicCamera {
     projection: Mat4,
@@ -133,5 +134,17 @@ impl WasdCameraController {
         self.zoom = self.zoom.max(0.25);
         self.reset_projection();
         false
+    }
+
+    pub fn on_tick(&mut self) {
+        if App::is_key_pressed(VirtualKeyCode::A) {
+            self.camera.set_position(self.camera.get_position() + glm::vec3(-0.01, 0.0, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::D) {
+            self.camera.set_position(self.camera.get_position() + glm::vec3(0.01, 0.0, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::W) {
+            self.camera.set_position(self.camera.get_position() + glm::vec3(0.0, 0.01, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::S) {
+            self.camera.set_position(self.camera.get_position() + glm::vec3(0.0, -0.01, 0.0));
+        }
     }
 }

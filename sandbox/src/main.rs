@@ -2,14 +2,14 @@ use adze_engine::app::App;
 use adze_engine::renderer::Renderer;
 use adze_engine::event::EventListener;
 use adze_engine::layer::Layer;
-use adze_engine::camera::OrthographicCamera;
+use adze_engine::camera::{OrthographicCamera, WasdCameraController};
 use adze_engine::glm;
 use adze_engine::glutin::event::VirtualKeyCode;
 use adze_engine::glm::Mat4;
 use adze_engine::texture::Texture;
 
 pub struct Sandbox {
-    camera: OrthographicCamera,
+    camera_controller: WasdCameraController,
     checker_board_texture: Texture,
     cherno_logo_texture: Texture
 }
@@ -18,36 +18,27 @@ impl Sandbox {
     pub fn new() -> Self {
         let checker_board_texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"));
         let cherno_logo_texture = Texture::new(String::from("sandbox/assets/textures/ChernoLogo.png"));
+
+        let mut camera_controller = WasdCameraController::new(1.0);
+        camera_controller.set_translation_speed(0.1);
+
         Sandbox {
-            camera: OrthographicCamera::new(-1.0, 1.0, -1.0, 1.0),
+            camera_controller,
             checker_board_texture,
             cherno_logo_texture
-        }
-    }
-
-    fn move_camera(&mut self) {
-        if App::is_key_pressed(VirtualKeyCode::A) {
-            self.camera.set_position(self.camera.get_position() + glm::vec3(-0.01, 0.0, 0.0));
-        } else if App::is_key_pressed(VirtualKeyCode::D) {
-            self.camera.set_position(self.camera.get_position() + glm::vec3(0.01, 0.0, 0.0));
-        } else if App::is_key_pressed(VirtualKeyCode::W) {
-            self.camera.set_position(self.camera.get_position() + glm::vec3(0.0, 0.01, 0.0));
-        } else if App::is_key_pressed(VirtualKeyCode::S) {
-            self.camera.set_position(self.camera.get_position() + glm::vec3(0.0, -0.01, 0.0));
         }
     }
 }
 
 impl EventListener for Sandbox {
     fn on_tick(&mut self, renderer: &mut Renderer) {
-        self.move_camera();
-        self.camera.set_rotation(0.0);
+        self.camera_controller.on_tick();
 
-        self.camera.recalculate_matrix();
+        self.camera_controller.get_camera().recalculate_matrix();
 
         renderer.clear();
 
-        renderer.begin(&self.camera);
+        renderer.begin(&self.camera_controller.get_camera());
 
         renderer.draw_quad_with_texture(&glm::identity(), &mut self.checker_board_texture);
 
