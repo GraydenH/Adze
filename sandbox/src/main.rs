@@ -48,11 +48,9 @@ impl EventListener for Sandbox {
             for x in 0..20 {
                 let pos = glm::vec3((x as f32) * 0.11, (y as f32) * 0.11, 0.0);
                 let transform = glm::translate(&glm::identity(), &pos) * scale;
-                renderer.draw_square(&transform);
+                renderer.draw_flat_color_quad(&transform, &glm::vec3((x as f32) * 0.05, (x as f32) * 0.05, (x + y) as f32 * 0.01));
             }
         }
-
-        renderer.draw_triangle(&glm::identity());
 
         renderer.end();
     }

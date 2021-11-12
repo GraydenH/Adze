@@ -1,5 +1,6 @@
 use glow::HasContext;
 use nalgebra_glm::Mat4;
+use crate::glm::{Vec3, Vec2, Vec4, Mat3};
 
 fn compile_shader(gl: &glow::Context, src: &str, ty: u32) -> glow::Shader {
     unsafe {
@@ -46,6 +47,48 @@ impl Shader {
         let renderer_id = link_program(gl, vs, fs);
         Shader {
             renderer_id
+        }
+    }
+
+    pub fn upload_uniform_integer1(&self, gl: &glow::Context, name: &str, value: i32) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_1_i32(Some(&location), value);
+        }
+    }
+
+    pub fn upload_uniform_float1(&self, gl: &glow::Context, name: &str, value: f32) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_1_f32(Some(&location), value);
+        }
+    }
+
+    pub fn upload_uniform_float2(&self, gl: &glow::Context, name: &str, value: &Vec2) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_2_f32(Some(&location), value.x, value.y);
+        }
+    }
+
+    pub fn upload_uniform_float3(&self, gl: &glow::Context, name: &str, value: &Vec3) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_3_f32(Some(&location), value.x, value.y, value.z);
+        }
+    }
+
+    pub fn upload_uniform_float4(&self, gl: &glow::Context, name: &str, value: &Vec4) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_4_f32(Some(&location), value.x, value.y, value.z, value.w);
+        }
+    }
+
+    pub fn upload_uniform_matrix3(&self, gl: &glow::Context, name: &str, matrix: &Mat3) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_matrix_3_f32_slice(Some(&location), false, matrix.as_slice());
         }
     }
 
