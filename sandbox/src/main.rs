@@ -6,15 +6,19 @@ use adze_engine::camera::OrthographicCamera;
 use adze_engine::glm;
 use adze_engine::glutin::event::VirtualKeyCode;
 use adze_engine::glm::Mat4;
+use adze_engine::texture::Texture;
 
 pub struct Sandbox {
-    camera: OrthographicCamera
+    camera: OrthographicCamera,
+    texture: Texture
 }
 
 impl Sandbox {
     pub fn new() -> Self {
+        let texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"));
         Sandbox {
-            camera: OrthographicCamera::new(-1.0, 1.0, -1.0, 1.0)
+            camera: OrthographicCamera::new(-1.0, 1.0, -1.0, 1.0),
+            texture
         }
     }
 
@@ -41,6 +45,8 @@ impl EventListener for Sandbox {
         renderer.clear();
 
         renderer.begin(&self.camera);
+
+        renderer.draw_quad_with_texture(&glm::identity(), &mut self.texture);
 
         let scale = glm::scale(&glm::identity(), &glm::vec3(0.1, 0.1, 0.1));
 

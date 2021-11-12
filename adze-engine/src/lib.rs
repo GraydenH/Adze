@@ -1,5 +1,6 @@
 mod buffer;
 mod shader;
+pub mod texture;
 pub mod camera;
 pub mod layer;
 pub mod event;
