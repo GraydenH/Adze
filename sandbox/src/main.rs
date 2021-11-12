@@ -5,7 +5,7 @@ use adze_engine::layer::Layer;
 use adze_engine::camera::{OrthographicCamera, WasdCameraController};
 use adze_engine::glm;
 use adze_engine::glutin::event::VirtualKeyCode;
-use adze_engine::glm::Mat4;
+use adze_engine::glm::{Mat4, Vec2};
 use adze_engine::texture::Texture;
 
 pub struct Sandbox {
@@ -55,6 +55,14 @@ impl EventListener for Sandbox {
         renderer.draw_quad_with_texture(&glm::identity(), &mut self.cherno_logo_texture);
 
         renderer.end();
+    }
+
+    fn on_window_resize(&mut self, width: u32, height: u32) {
+        self.camera_controller.on_window_resize(width, height);
+    }
+
+    fn on_mouse_scroll(&mut self, delta: Vec2) -> bool {
+        self.camera_controller.on_mouse_scroll(delta)
     }
 }
 

@@ -1,6 +1,7 @@
-use egui::Vec2;
+
 use crate::renderer::Renderer;
 use glutin::event::VirtualKeyCode;
+use crate::glm::Vec2;
 
 // https://github.com/mathiasmagnusson
 pub trait EventListener {

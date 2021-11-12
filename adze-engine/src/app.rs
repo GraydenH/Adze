@@ -7,6 +7,11 @@ use crate::layer::{LayerStack, Layer};
 use std::time::Instant;
 use glutin::event::{DeviceEvent, VirtualKeyCode};
 use crate::glutin::event::ElementState;
+use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
+use crate::glutin::dpi::LogicalPosition;
+use crate::glm;
+use crate::glm::Vec2;
+use glutin::dpi::PhysicalPosition;
 
 pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
 
@@ -125,6 +130,15 @@ impl App {
                     _ => {}
                 },
                 Event::WindowEvent { event, .. } => match event {
+                    WindowEvent::MouseWheel { delta, .. } => {
+                        let delta = match delta {
+                            LineDelta(x, y) => glm::vec2(x, y),
+                            PixelDelta(PhysicalPosition { x, y }) => glm::vec2(x as f32, y as f32),
+                        };
+                        for layer in layer_stack.iter_mut().rev() {
+                            layer.on_mouse_scroll(delta);
+                        }
+                    },
                     WindowEvent::CloseRequested => {
                         // Cleanup
                         unsafe {
