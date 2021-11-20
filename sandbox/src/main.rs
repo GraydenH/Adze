@@ -16,8 +16,8 @@ pub struct Sandbox {
 
 impl Sandbox {
     pub fn new() -> Self {
-        let checker_board_texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"));
-        let cherno_logo_texture = Texture::new(String::from("sandbox/assets/textures/ChernoLogo.png"));
+        let checker_board_texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"), 10.0);
+        let cherno_logo_texture = Texture::new(String::from("sandbox/assets/textures/ChernoLogo.png"), 1.0);
 
         let mut camera_controller = WasdCameraController::new(1.0);
         camera_controller.set_translation_speed(0.1);
@@ -40,7 +40,7 @@ impl EventListener for Sandbox {
 
         renderer.begin(&self.camera_controller.get_camera());
 
-        renderer.draw_quad_with_texture(glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), &mut self.checker_board_texture);
+        renderer.draw_quad_with_texture(glm::vec3(0.0, 0.0, 0.0), glm::vec3(4.0, 4.0, 1.0), &mut self.checker_board_texture);
 
         for y in 0..20 {
             for x in 0..20 {

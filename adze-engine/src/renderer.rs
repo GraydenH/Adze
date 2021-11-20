@@ -69,9 +69,10 @@ const TEXTURE_FS_SRC: &str = "
         in vec2 vtex_coord;
 
         uniform sampler2D utexture;
+        uniform float utiling;
 
         void main() {
-            color = texture(utexture, vtex_coord);
+            color = texture(utexture, vtex_coord * utiling);
         }
 ";
 
@@ -113,6 +114,8 @@ impl Renderer {
         unsafe {
             gl.enable(glow::BLEND);
             gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+
+            gl.enable(glow::DEPTH_TEST);
         }
 
         Renderer {
@@ -136,7 +139,7 @@ impl Renderer {
         // Clear the screen to black
         unsafe {
             self.gl.clear_color(0.3, 0.3, 0.3, 1.0);
-            self.gl.clear(glow::COLOR_BUFFER_BIT);
+            self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
         }
     }
 
@@ -174,6 +177,7 @@ impl Renderer {
 
         self.texture_shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
         self.texture_shader.upload_uniform_integer1(&self.gl, "utexture", 0);
+        self.texture_shader.upload_uniform_float1(&self.gl, "utiling", texture.get_tiling());
 
         if texture.get_renderer_id() == None {
             texture.init(&self.gl);
