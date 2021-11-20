@@ -146,22 +146,33 @@ impl Renderer {
         }
     }
 
-    pub fn draw_flat_color_quad(&self, transform: &Mat4, color: &Vec3) {
+    pub fn draw_flat_color_quad(&self, position: Vec3, size: Vec3, color: Vec3) {
         self.quad_vertex_array.bind(&self.gl);
         self.flat_color_shader.bind(&self.gl);
         self.flat_color_shader.upload_uniform_float3(&self.gl, "ucolor", color);
         self.flat_color_shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
-        self.flat_color_shader.upload_uniform_mat4(&self.gl, "utransform", transform);
+
+        let transform = glm::translate(&glm::identity(), &position) *
+            //glm::rotate(&glm::identity(),rotation,&s) *
+            glm::scale(&glm::identity(), &size);
+
+        self.flat_color_shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
+
         unsafe {
             self.gl.draw_elements(glow::TRIANGLES, self.quad_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
         }
     }
 
-    pub fn draw_quad_with_texture(&self, transform: &Mat4, texture: &mut Texture) {
+    pub fn draw_quad_with_texture(&self, position: Vec3, size: Vec3, texture: &mut Texture) {
         self.quad_vertex_array.bind(&self.gl);
         self.texture_shader.bind(&self.gl);
         self.texture_shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
-        self.texture_shader.upload_uniform_mat4(&self.gl, "utransform", transform);
+
+        let transform = glm::translate(&glm::identity(), &position) *
+            //glm::rotate(&glm::identity(),rotation,&s) *
+            glm::scale(&glm::identity(), &size);
+
+        self.texture_shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
         self.texture_shader.upload_uniform_integer1(&self.gl, "utexture", 0);
 
         if texture.get_renderer_id() == None {

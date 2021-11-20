@@ -64,21 +64,21 @@ impl Shader {
         }
     }
 
-    pub fn upload_uniform_float2(&self, gl: &glow::Context, name: &str, value: &Vec2) {
+    pub fn upload_uniform_float2(&self, gl: &glow::Context, name: &str, value: Vec2) {
         unsafe {
             let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
             gl.uniform_2_f32(Some(&location), value.x, value.y);
         }
     }
 
-    pub fn upload_uniform_float3(&self, gl: &glow::Context, name: &str, value: &Vec3) {
+    pub fn upload_uniform_float3(&self, gl: &glow::Context, name: &str, value: Vec3) {
         unsafe {
             let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
             gl.uniform_3_f32(Some(&location), value.x, value.y, value.z);
         }
     }
 
-    pub fn upload_uniform_float4(&self, gl: &glow::Context, name: &str, value: &Vec4) {
+    pub fn upload_uniform_float4(&self, gl: &glow::Context, name: &str, value: Vec4) {
         unsafe {
             let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
             gl.uniform_4_f32(Some(&location), value.x, value.y, value.z, value.w);

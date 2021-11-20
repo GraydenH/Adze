@@ -40,19 +40,16 @@ impl EventListener for Sandbox {
 
         renderer.begin(&self.camera_controller.get_camera());
 
-        renderer.draw_quad_with_texture(&glm::identity(), &mut self.checker_board_texture);
-
-        let scale = glm::scale(&glm::identity(), &glm::vec3(0.1, 0.1, 0.1));
+        renderer.draw_quad_with_texture(glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), &mut self.checker_board_texture);
 
         for y in 0..20 {
             for x in 0..20 {
                 let pos = glm::vec3((x as f32) * 0.11, (y as f32) * 0.11, 0.0);
-                let transform = glm::translate(&glm::identity(), &pos) * scale;
-                renderer.draw_flat_color_quad(&transform, &glm::vec3((x as f32) * 0.05, (x as f32) * 0.05, (x + y) as f32 * 0.01));
+                renderer.draw_flat_color_quad(pos, glm::vec3(0.1, 0.1, 0.1), glm::vec3((x as f32) * 0.05, (x as f32) * 0.05, (x + y) as f32 * 0.01));
             }
         }
 
-        renderer.draw_quad_with_texture(&glm::identity(), &mut self.cherno_logo_texture);
+        renderer.draw_quad_with_texture(glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.1, 0.1, 0.1), &mut self.cherno_logo_texture);
 
         renderer.end();
     }
