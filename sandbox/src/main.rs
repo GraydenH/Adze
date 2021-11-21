@@ -44,8 +44,8 @@ impl EventListener for Sandbox {
 
         for y in 0..20 {
             for x in 0..20 {
-                let pos = glm::vec3((x as f32) * 0.11, (y as f32) * 0.11, 0.0);
-                renderer.draw_flat_color_quad(pos, glm::vec3(0.1, 0.1, 0.1), glm::vec3((x as f32) * 0.05, (x as f32) * 0.05, (x + y) as f32 * 0.01));
+                let pos = glm::vec3(-0.5 + (x as f32) * 0.11, -0.5 + (y as f32) * 0.11, 0.0);
+                renderer.draw_flat_color_quad(pos, glm::vec3(0.1, 0.1, 0.1),glm::vec4((x as f32) / 20.0, 0.0, (y as f32) / 20.0, 1.0));
             }
         }
 
