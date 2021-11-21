@@ -6,6 +6,7 @@ pub mod layer;
 pub mod event;
 pub mod renderer;
 pub mod app;
+pub mod timer;
 
 pub use nalgebra_glm as glm;
 pub use glutin;

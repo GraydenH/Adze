@@ -7,6 +7,7 @@ use adze_engine::glm;
 use adze_engine::glutin::event::VirtualKeyCode;
 use adze_engine::glm::{Mat4, Vec2};
 use adze_engine::texture::Texture;
+use adze_engine::timer::Timer;
 
 pub struct Sandbox {
     camera_controller: WasdCameraController,
@@ -16,6 +17,8 @@ pub struct Sandbox {
 
 impl Sandbox {
     pub fn new() -> Self {
+        let _timer = Timer::new("SandBox::new");
+
         let checker_board_texture = Texture::new(String::from("sandbox/assets/textures/Checkerboard.png"), 10.0);
         let cherno_logo_texture = Texture::new(String::from("sandbox/assets/textures/ChernoLogo.png"), 1.0);
 
@@ -32,6 +35,8 @@ impl Sandbox {
 
 impl EventListener for Sandbox {
     fn on_tick(&mut self, renderer: &mut Renderer) {
+        let _timer = Timer::new("SandBox::on_tick");
+
         self.camera_controller.on_tick();
 
         self.camera_controller.get_camera().recalculate_matrix();
