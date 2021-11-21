@@ -11,82 +11,48 @@ use image::{GenericImageView, DynamicImage};
 use crate::texture::Texture;
 
 // Shader sources
-const FLAT_COLOR_VS_SRC: &str = "
-        #version 330 core
-
-        layout(location = 0) in vec3 aposition;
-
-        out vec3 vposition;
-
-        uniform mat4 uprojection_view;
-        uniform mat4 utransform;
-
-        void main()
-        {
-            vposition = aposition;
-            gl_Position = uprojection_view * utransform * vec4(aposition, 1.0);
-        }
-";
-
-const FLAT_COLOR_FS_SRC: &str = "
-        #version 330 core
-
-        layout(location = 0) out vec4 color;
-
-        in vec3 vposition;
-
-        uniform vec3 ucolor;
-
-        void main()
-        {
-            color = vec4(ucolor, 1.0);
-        }
-";
-
 const TEXTURE_VS_SRC: &str = "
         #version 330 core
 
         layout(location = 0) in vec3 aposition;
-        layout(location = 1) in vec2 atex_coord;
+        layout(location = 1) in vec2 atexture_coord;
 
         uniform mat4 uprojection_view;
         uniform mat4 utransform;
 
-        out vec2 vtex_coord;
+        out vec2 vtexture_coord;
 
         void main() {
-            vtex_coord = atex_coord;
+            vtexture_coord = atexture_coord;
             gl_Position = uprojection_view * utransform * vec4(aposition, 1.0);
         }
-
 ";
 
 const TEXTURE_FS_SRC: &str = "
         #version 330 core
-
         layout(location = 0) out vec4 color;
 
-        in vec2 vtex_coord;
+        in vec2 vtexture_coord;
 
         uniform sampler2D utexture;
         uniform float utiling;
+        uniform vec4 ucolor;
 
         void main() {
-            color = texture(utexture, vtex_coord * utiling);
+            color = texture(utexture, vtexture_coord * utiling) * ucolor;
         }
 ";
 
 pub struct Renderer {
     gl: glow::Context,
     quad_vertex_array: VertexArray,
-    flat_color_shader: Shader,
-    texture_shader: Shader,
-    projection_view: Mat4
+    shader: Shader,
+    projection_view: Mat4,
+    white_texture: Texture,
 }
 
 impl Renderer {
     pub fn new(gl: glow::Context) -> Renderer {
-        let flat_color_shader = Shader::new(&gl, FLAT_COLOR_VS_SRC, FLAT_COLOR_FS_SRC);
         let texture_shader = Shader::new(&gl, TEXTURE_VS_SRC, TEXTURE_FS_SRC);
 
         let vertices = vec![
@@ -111,6 +77,11 @@ impl Renderer {
         let mut quad_vertex_array = VertexArray::new(&gl, square_index_buffer);
         quad_vertex_array.add_vertex_buffer(&gl, vertex_buffer);
 
+        let white_texture = Texture::from_data(&gl, vec![255_u8, 255_u8, 255_u8, 255_u8], 1, 1, glow::RGBA8, glow::RGBA);
+
+        // let mut white_texture = Texture::from_dimensions(&gl,1, 1);
+        // white_texture.set_data(&gl, vec![255_u8, 255_u8, 255_u8, 255_u8]);
+
         unsafe {
             gl.enable(glow::BLEND);
             gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
@@ -121,8 +92,8 @@ impl Renderer {
         Renderer {
             gl,
             quad_vertex_array,
-            flat_color_shader,
-            texture_shader,
+            shader: texture_shader,
+            white_texture,
             projection_view: glm::identity()
         }
     }
@@ -149,17 +120,21 @@ impl Renderer {
         }
     }
 
-    pub fn draw_flat_color_quad(&self, position: Vec3, size: Vec3, color: Vec3) {
+    pub fn draw_flat_color_quad(&self, position: Vec3, size: Vec3, color: Vec4) {
         self.quad_vertex_array.bind(&self.gl);
-        self.flat_color_shader.bind(&self.gl);
-        self.flat_color_shader.upload_uniform_float3(&self.gl, "ucolor", color);
-        self.flat_color_shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
+        self.shader.bind(&self.gl);
+        self.shader.upload_uniform_float4(&self.gl,"ucolor", color);
+        self.shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
 
         let transform = glm::translate(&glm::identity(), &position) *
             //glm::rotate(&glm::identity(),rotation,&s) *
             glm::scale(&glm::identity(), &size);
 
-        self.flat_color_shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
+        self.shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
+        self.shader.upload_uniform_float1(&self.gl, "utiling", 1.0);
+        self.shader.upload_uniform_integer1(&self.gl, "utexture", 0);
+
+        self.white_texture.bind(&self.gl, 0);
 
         unsafe {
             self.gl.draw_elements(glow::TRIANGLES, self.quad_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
@@ -168,16 +143,17 @@ impl Renderer {
 
     pub fn draw_quad_with_texture(&self, position: Vec3, size: Vec3, texture: &mut Texture) {
         self.quad_vertex_array.bind(&self.gl);
-        self.texture_shader.bind(&self.gl);
-        self.texture_shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
+        self.shader.bind(&self.gl);
+        self.shader.upload_uniform_float4(&self.gl,"ucolor", glm::vec4(1.0, 1.0, 1.0, 1.0));
+        self.shader.upload_uniform_mat4(&self.gl, "uprojection_view", &self.projection_view);
 
         let transform = glm::translate(&glm::identity(), &position) *
             //glm::rotate(&glm::identity(),rotation,&s) *
             glm::scale(&glm::identity(), &size);
 
-        self.texture_shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
-        self.texture_shader.upload_uniform_integer1(&self.gl, "utexture", 0);
-        self.texture_shader.upload_uniform_float1(&self.gl, "utiling", texture.get_tiling());
+        self.shader.upload_uniform_mat4(&self.gl, "utransform", &transform);
+        self.shader.upload_uniform_float1(&self.gl, "utiling", texture.get_tiling());
+        self.shader.upload_uniform_integer1(&self.gl, "utexture", 0);
 
         if texture.get_renderer_id() == None {
             texture.init(&self.gl);

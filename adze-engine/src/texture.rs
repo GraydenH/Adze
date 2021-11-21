@@ -5,6 +5,11 @@ pub struct Texture {
     renderer_id: Option<glow::Texture>,
     path: String,
     tiling: f32,
+    width: u32,
+    height: u32,
+    data: Vec<u8>,
+    internal_format: u32,
+    data_format: u32
 }
 
 impl Texture {
@@ -12,7 +17,12 @@ impl Texture {
         Texture {
             renderer_id: None,
             path,
-            tiling
+            tiling,
+            width: 0,
+            height: 0,
+            data: vec![],
+            internal_format: 0,
+            data_format: 0
         }
     }
 
@@ -68,6 +78,110 @@ impl Texture {
                 self.set_renderer_id(renderer_id);
             }
         }
+    }
+
+    pub fn from_dimensions(gl: &glow::Context, width: u32, height: u32) -> Self {
+        unsafe {
+            let internal_format = glow::RGBA8;
+            let data_format = glow::RGBA;
+
+            let mut renderer_id = gl.create_texture().unwrap();
+
+            gl.active_texture(0);
+            gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
+
+            gl.tex_storage_2d(glow::TEXTURE_2D, 1, internal_format, width as i32, height as i32);
+
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
+
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::REPEAT as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::REPEAT as i32);
+
+            Texture {
+                renderer_id: Some(renderer_id),
+                path: "".to_string(),
+                tiling: 1.0,
+                width,
+                height,
+                data: vec![],
+                internal_format,
+                data_format
+            }
+        }
+    }
+
+    pub fn from_data(gl: &glow::Context, data: Vec<u8>, width: u32, height: u32, internal_format: u32, data_format: u32) -> Self {
+        unsafe {
+            let mut renderer_id = gl.create_texture().unwrap();
+
+            gl.active_texture(0);
+            gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
+
+            gl.tex_storage_2d(glow::TEXTURE_2D, 1, internal_format, width as i32, height as i32);
+
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
+
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::REPEAT as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::REPEAT as i32);
+
+            gl.tex_sub_image_2d(glow::TEXTURE_2D, 0, 0, 0, width as i32, height as i32, data_format, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(data.as_slice()));
+            Texture {
+                renderer_id: Some(renderer_id),
+                path: "".to_string(),
+                tiling: 1.0,
+                width,
+                height,
+                data,
+                internal_format,
+                data_format
+            }
+        }
+    }
+
+    pub fn set_data(&mut self, gl: &glow::Context, data: Vec<u8>) {
+        self.data = data;
+        self.bind(gl, 0);
+        unsafe {
+            gl.tex_sub_image_2d(glow::TEXTURE_2D, 0, 0, 0, self.width as i32, self.height as i32, self.data_format, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(self.data.as_slice()));
+        }
+    }
+
+    pub fn get_data(&self) -> &Vec<u8> {
+        &self.data
+    }
+
+    pub fn get_width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+    }
+
+    pub fn get_height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+    }
+
+    pub fn get_internal_format(&self) -> u32 {
+        self.internal_format
+    }
+
+    pub fn set_internal_format(&mut self, internal_format: u32) {
+        self.internal_format = internal_format;
+    }
+
+    pub fn get_data_format(&self) -> u32 {
+        self.data_format
+    }
+
+    pub fn set_data_format(&mut self, data_format: u32) {
+        self.data_format = data_format;
     }
 
     pub(crate) fn bind(&self, gl: &glow::Context, slot: u32) {
