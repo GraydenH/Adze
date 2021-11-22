@@ -1,6 +1,7 @@
 use core::mem;
 use glow::{HasContext, Buffer};
 use crate::buffer;
+use crate::renderer::QuadVertex;
 
 #[derive(Clone, Copy)]
 pub enum ShaderDataType {
@@ -138,6 +139,43 @@ impl VertexBuffer {
         }
     }
 
+    pub fn from_size(gl: &glow::Context, size: i32, layout: BufferLayout) -> VertexBuffer {
+        unsafe {
+            // Create a Vertex Buffer Object and copy the vertex data to it
+            let renderer_id = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(renderer_id));
+            gl.buffer_data_size(
+                glow::ARRAY_BUFFER,
+                size,
+                glow::DYNAMIC_DRAW,
+            );
+            VertexBuffer {
+                vertices: vec![],
+                layout,
+                renderer_id
+            }
+        }
+    }
+
+    fn set_vertices(&mut self, gl: &glow::Context, vertices: &Vec<QuadVertex>) {
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.renderer_id));
+            let vertices_u8: &[u8] = core::slice::from_raw_parts(
+                vertices.as_ptr() as *const u8,
+                vertices.len() * core::mem::size_of::<QuadVertex>(),
+            );
+            gl.buffer_sub_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                0,
+                vertices_u8
+            );
+        }
+    }
+
+    fn get_vertices(&mut self) -> &Vec<f32> {
+        &self.vertices
+    }
+
     pub fn bind(&self, gl: &glow::Context) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.renderer_id));
@@ -192,46 +230,43 @@ impl IndexBuffer {
 }
 
 pub struct VertexArray {
-    vertex_buffers: Vec<VertexBuffer>,
+    vertex_buffer: buffer::VertexBuffer,
     index_buffer: buffer::IndexBuffer,
     renderer_id: glow::VertexArray
 }
 
 impl VertexArray {
-    pub fn new(gl: &glow::Context, index_buffer: buffer::IndexBuffer) -> VertexArray {
+    pub fn new(gl: &glow::Context, index_buffer: buffer::IndexBuffer, vertex_buffer: buffer::VertexBuffer) -> VertexArray {
         unsafe {
             // Create Vertex Array Object
             let renderer_id = gl.create_vertex_array().unwrap();
             gl.bind_vertex_array(Some(renderer_id));
             index_buffer.bind(gl);
+            vertex_buffer.bind(gl);
+            for (index, element) in vertex_buffer.layout.elements.iter().enumerate() {
+                unsafe {
+                    // Specify the layout of the vertex data
+                    gl.enable_vertex_attrib_array(index as u32);
+                    gl.vertex_attrib_pointer_f32(
+                        index as u32,
+                        element.get_component_count(),
+                        to_opengl_type(element.data_type),
+                        false,
+                        vertex_buffer.layout.stride,
+                        element.offset,
+                    );
+                }
+            }
             VertexArray {
-                vertex_buffers: vec![],
+                vertex_buffer,
                 index_buffer,
                 renderer_id
             }
         }
     }
 
-    pub fn add_vertex_buffer(&mut self, gl: &glow::Context, buffer: VertexBuffer) {
-        self.bind(gl);
-        buffer.bind(gl);
-
-        unsafe {
-            for (index, element) in buffer.layout.elements.iter().enumerate() {
-                // Specify the layout of the vertex data
-                gl.enable_vertex_attrib_array(index as u32);
-                gl.vertex_attrib_pointer_f32(
-                    index as u32,
-                    element.get_component_count(),
-                    to_opengl_type(element.data_type),
-                    false,
-                    buffer.layout.stride,
-                    element.offset,
-                );
-            }
-
-            self.vertex_buffers.push(buffer);
-        }
+    pub fn set_vertices(&mut self, gl: &glow::Context, vertices: &Vec<QuadVertex>) {
+        self.vertex_buffer.set_vertices(gl, vertices);
     }
 
     pub fn get_indices_len(&self) -> usize {
