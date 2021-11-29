@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "adze-engine",
+    "adze",
     "sandbox",
     "editor"
 ]
-name = "adze"
+name = "adze-parent"
 version = "0.1.0"
 authors = ["Grayden Hormes <graydenhormes@gmail.com>"]
 edition = "2018"

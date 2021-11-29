@@ -1,13 +1,13 @@
-use adze_engine::app::App;
-use adze_engine::renderer::Renderer;
-use adze_engine::event::EventListener;
-use adze_engine::layer::Layer;
-use adze_engine::camera::{OrthographicCamera, WasdCameraController};
-use adze_engine::glm;
-use adze_engine::glutin::event::VirtualKeyCode;
-use adze_engine::glm::{Mat4, Vec2};
-use adze_engine::texture::Texture;
-use adze_engine::timer::Timer;
+use adze::app::App;
+use adze::renderer::Renderer;
+use adze::event::EventListener;
+use adze::layer::Layer;
+use adze::camera::{OrthographicCamera, WasdCameraController};
+use adze::glm;
+use adze::glutin::event::VirtualKeyCode;
+use adze::glm::{Mat4, Vec2};
+use adze::texture::Texture;
+use adze::timer::Timer;
 
 pub struct Editor {
 }
