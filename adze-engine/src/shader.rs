@@ -85,6 +85,13 @@ impl Shader {
         }
     }
 
+    pub fn upload_uniform_int_array(&self, gl: &glow::Context, name: &str, values: Vec<i32>) {
+        unsafe {
+            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
+            gl.uniform_1_i32_slice(Some(&location), values.as_slice());
+        }
+    }
+
     pub fn upload_uniform_matrix3(&self, gl: &glow::Context, name: &str, matrix: &Mat3) {
         unsafe {
             let location = gl.get_uniform_location(self.renderer_id, name).unwrap();

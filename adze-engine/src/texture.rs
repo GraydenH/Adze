@@ -87,7 +87,6 @@ impl Texture {
 
             let mut renderer_id = gl.create_texture().unwrap();
 
-            gl.active_texture(0);
             gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
 
             gl.tex_storage_2d(glow::TEXTURE_2D, 1, internal_format, width as i32, height as i32);
@@ -115,7 +114,6 @@ impl Texture {
         unsafe {
             let mut renderer_id = gl.create_texture().unwrap();
 
-            gl.active_texture(0);
             gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
 
             gl.tex_storage_2d(glow::TEXTURE_2D, 1, internal_format, width as i32, height as i32);
@@ -142,7 +140,7 @@ impl Texture {
 
     pub fn set_data(&mut self, gl: &glow::Context, data: Vec<u8>) {
         self.data = data;
-        self.bind(gl, 0);
+        Texture::bind(gl, self.renderer_id.unwrap(), 0);
         unsafe {
             gl.tex_sub_image_2d(glow::TEXTURE_2D, 0, 0, 0, self.width as i32, self.height as i32, self.data_format, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(self.data.as_slice()));
         }
@@ -184,10 +182,10 @@ impl Texture {
         self.data_format = data_format;
     }
 
-    pub(crate) fn bind(&self, gl: &glow::Context, slot: u32) {
+    pub fn bind(gl: &glow::Context, renderer_id: glow::Texture, slot: u32) {
         unsafe {
-            gl.active_texture(slot);
-            gl.bind_texture(glow::TEXTURE_2D, self.get_renderer_id());
+            gl.active_texture(glow::TEXTURE0 + slot);
+            gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
         }
     }
 
