@@ -41,7 +41,7 @@ const TEXTURE_FS_SRC: &str = "
         in vec2 vtexture_coordinate;
         in float vtexture_index;
 
-        uniform sampler2D utextures[32];
+        uniform sampler2D utextures[16];
 
         void main() {
             color = texture(utextures[int(vtexture_index)], vtexture_coordinate) * vcolor;
@@ -51,7 +51,7 @@ const TEXTURE_FS_SRC: &str = "
 const MAX_QUADS: usize = 10000;
 const MAX_VERTICES: usize = MAX_QUADS * 4;
 const MAX_INDICES: usize = MAX_QUADS * 6;
-const MAX_TEXTURE_SLOTS: usize = 32;
+const MAX_TEXTURE_SLOTS: usize = 16;
 
 #[derive(Clone, Copy, Debug)]
 pub struct QuadVertex {
