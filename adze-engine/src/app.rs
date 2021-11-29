@@ -73,12 +73,12 @@ impl App {
         unsafe { return KEY_PRESSED [key_code as usize]; }
     }
 
-    pub fn run(self) {
+    pub fn run(mut self) {
         let event_loop = glutin::event_loop::EventLoop::with_user_event();
 
         let (gl_window, gl) = create_display(&event_loop, self.title.as_str());
 
-        let egui = egui_glow::EguiGlow::new(&gl_window, &gl);
+        let mut egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
         let mut renderer = Renderer::new(gl);
         let mut layer_stack = self.layer_stack;
@@ -91,9 +91,34 @@ impl App {
         event_loop.run(move |event, _, control_flow| {
             use glutin::event::{Event, WindowEvent};
             use glutin::event_loop::ControlFlow;
+
             *control_flow = ControlFlow::Wait;
-            match event {
-                Event::MainEventsCleared => {
+
+            let mut redraw = || {
+                egui.begin_frame(gl_window.window());
+
+                let mut quit = false;
+
+                egui::SidePanel::left("my_side_panel").show(egui.ctx(), |ui| {
+                    ui.heading("Hello World!");
+                    if ui.button("Quit").clicked() {
+                        quit = true;
+                    }
+                });
+
+                let (needs_repaint, shapes) = egui.end_frame(gl_window.window());
+
+                *control_flow = if quit {
+                    glutin::event_loop::ControlFlow::Exit
+                } else if needs_repaint {
+                    gl_window.window().request_redraw();
+                    glutin::event_loop::ControlFlow::Poll
+                } else {
+                    glutin::event_loop::ControlFlow::Wait
+                };
+
+                {
+                    // draw things behind egui here
                     dt = clock.elapsed().as_secs_f32() - elapsed_time;
                     while dt >= fixed_timestep {
                         dt -= fixed_timestep;
@@ -103,9 +128,21 @@ impl App {
                             layer.on_tick(&mut renderer);
                         }
                     }
+
+                    egui.paint(&gl_window, renderer.borrow_context(), shapes);
+
+                    // draw things on top of egui here
+
+                    gl_window.swap_buffers().unwrap();
+                }
+            };
+
+            match event {
+                Event::RedrawEventsCleared if cfg!(windows) => redraw(),
+                Event::RedrawRequested(_) if !cfg!(windows) => redraw(),
+                Event::MainEventsCleared => {
                     gl_window.window().request_redraw();
                 },
-                Event::LoopDestroyed => return,
                 Event::DeviceEvent { event, ..} => match event {
                     DeviceEvent::Key(input) => unsafe {
                         if let Some(keycode) = input.virtual_keycode {
@@ -123,42 +160,29 @@ impl App {
                                     layer.on_key_release(keycode);
                                 }
                             };
-
-                            gl_window.window().request_redraw();
                         }
                     }
                     _ => {}
                 },
-                Event::WindowEvent { event, .. } => match event {
-                    WindowEvent::Resized(size) => {
-                        renderer.set_viewport(0, 0, size.width, size.height);
-                    },
-                    WindowEvent::MouseWheel { delta, .. } => {
-                        let delta = match delta {
-                            LineDelta(x, y) => glm::vec2(x, y),
-                            PixelDelta(PhysicalPosition { x, y }) => glm::vec2(x as f32, y as f32),
-                        };
-                        for layer in layer_stack.iter_mut().rev() {
-                            layer.on_mouse_scroll(delta);
-                        }
-                    },
-                    WindowEvent::CloseRequested => {
-                        // Cleanup
-                        unsafe {
-                            // gl::DeleteProgram(program);
-                            // gl::DeleteShader(fs);
-                            // gl::DeleteShader(vs);
-                            // gl::DeleteBuffers(1, &vbo);
-                            // gl::DeleteVertexArrays(1, &vao);
-                        }
-                        *control_flow = ControlFlow::Exit
-                    },
-                    _ => (),
-                },
-                Event::RedrawRequested(_) => {
+                Event::WindowEvent { event, .. } => {
+                    if egui.is_quit_event(&event) {
+                        *control_flow = glutin::event_loop::ControlFlow::Exit;
+                    }
 
-                    gl_window.swap_buffers().unwrap();
+                    if let glutin::event::WindowEvent::Resized(physical_size) = event {
+                        gl_window.resize(physical_size);
+                    }
+
+                    egui.on_event(&event);
+
+                    gl_window.window().request_redraw(); // TODO: ask egui if the events warrants a repaint instead
+                }
+                Event::RedrawRequested(_) => {
+                    //gl_window.swap_buffers().unwrap();
                 },
+                Event::LoopDestroyed => {
+                    egui.destroy(&renderer.borrow_context());
+                }
                 _ => (),
             }
         });

@@ -2,6 +2,7 @@
 members = [
     "adze-engine",
     "sandbox",
+    "editor"
 ]
 name = "adze"
 version = "0.1.0"
