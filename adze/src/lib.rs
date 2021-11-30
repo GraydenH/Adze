@@ -5,7 +5,6 @@ pub use nalgebra_glm as glm;
 
 mod shader;
 pub mod texture;
-pub mod layer;
 pub mod renderer;
 pub mod app;
 pub mod timer;

@@ -1,7 +1,7 @@
 use adze::app::App;
 use adze::renderer::Renderer;
 use adze::app::event::EventListener;
-use adze::layer::Layer;
+use adze::app::layer::Layer;
 use adze::renderer::camera::{OrthographicCamera, WasdCameraController};
 use adze::{glm, egui};
 use adze::glutin::event::VirtualKeyCode;

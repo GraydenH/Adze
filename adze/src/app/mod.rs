@@ -10,12 +10,13 @@ use crate::glm::Vec2;
 use crate::glutin::dpi::LogicalPosition;
 use crate::glutin::event::ElementState;
 use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
-use crate::layer::{Layer, LayerStack};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use crate::renderer::Renderer;
 use crate::shader::Shader;
+use crate::app::layer::{LayerStack, Layer};
 
 pub mod event;
+pub mod layer;
 
 pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
 
