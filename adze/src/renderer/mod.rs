@@ -5,13 +5,15 @@ use image::{DynamicImage, GenericImageView};
 use nalgebra_glm as glm;
 use nalgebra_glm::Mat4;
 
-use crate::camera::OrthographicCamera;
+use camera::OrthographicCamera;
+
 use crate::glm::{Vec2, Vec3, Vec4};
+use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use crate::shader::Shader;
 use crate::texture::Texture;
-use crate::renderer::buffer::{BufferElement, BufferLayout, VertexArray, ShaderDataType, IndexBuffer, VertexBuffer};
 
 pub mod buffer;
+pub mod camera;
 
 // Shader sources
 const TEXTURE_VS_SRC: &str = "
