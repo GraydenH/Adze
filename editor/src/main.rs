@@ -1,6 +1,6 @@
 use adze::app::App;
 use adze::renderer::Renderer;
-use adze::event::EventListener;
+use adze::app::event::EventListener;
 use adze::layer::Layer;
 use adze::renderer::camera::{OrthographicCamera, WasdCameraController};
 use adze::{glm, egui};

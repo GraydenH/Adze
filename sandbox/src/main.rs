@@ -1,6 +1,5 @@
 use adze::app::App;
 use adze::renderer::Renderer;
-use adze::event::EventListener;
 use adze::layer::Layer;
 use adze::glm;
 use adze::glutin::event::VirtualKeyCode;
@@ -8,6 +7,7 @@ use adze::glm::{Mat4, Vec2};
 use adze::texture::Texture;
 use adze::timer::Timer;
 use adze::renderer::camera::WasdCameraController;
+use adze::app::event::EventListener;
 
 pub struct Sandbox {
     camera_controller: WasdCameraController,

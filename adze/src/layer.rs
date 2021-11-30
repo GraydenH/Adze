@@ -1,5 +1,5 @@
 use std::collections::{vec_deque::IterMut, VecDeque};
-use crate::event::EventListener;
+use crate::app::event::EventListener;
 
 pub trait Layer: EventListener {
     fn on_attach(&mut self) {}

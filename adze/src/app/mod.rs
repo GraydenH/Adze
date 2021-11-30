@@ -1,17 +1,21 @@
 use std::str;
-use glow::HasContext;
-use crate::renderer::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
-use crate::shader::Shader;
-use crate::renderer::Renderer;
-use crate::layer::{LayerStack, Layer};
 use std::time::Instant;
+
+use glow::HasContext;
+use glutin::dpi::PhysicalPosition;
 use glutin::event::{DeviceEvent, VirtualKeyCode};
-use crate::glutin::event::ElementState;
-use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
-use crate::glutin::dpi::LogicalPosition;
+
 use crate::glm;
 use crate::glm::Vec2;
-use glutin::dpi::PhysicalPosition;
+use crate::glutin::dpi::LogicalPosition;
+use crate::glutin::event::ElementState;
+use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
+use crate::layer::{Layer, LayerStack};
+use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
+use crate::renderer::Renderer;
+use crate::shader::Shader;
+
+pub mod event;
 
 pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
 
