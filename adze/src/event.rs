@@ -2,10 +2,12 @@
 use crate::renderer::Renderer;
 use glutin::event::VirtualKeyCode;
 use crate::glm::Vec2;
+use egui_glow::EguiGlow;
 
 // https://github.com/mathiasmagnusson
 pub trait EventListener {
     fn on_tick(&mut self, renderer: &mut Renderer) {}
+    fn on_ui_update(&mut self, egui: &EguiGlow) {}
     fn on_window_closed(&mut self) {}
     fn on_window_resize(&mut self, _width: u32, _height: u32) {}
     fn on_key_press(&mut self, _button: VirtualKeyCode, _repeat: bool) -> bool {

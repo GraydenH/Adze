@@ -10,6 +10,8 @@ pub mod timer;
 
 pub use nalgebra_glm as glm;
 pub use glutin;
+pub use egui;
+pub use egui_glow;
 
 #[cfg(test)]
 mod tests {

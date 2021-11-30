@@ -97,25 +97,11 @@ impl App {
             let mut redraw = || {
                 egui.begin_frame(gl_window.window());
 
-                let mut quit = false;
-
-                egui::SidePanel::left("my_side_panel").show(egui.ctx(), |ui| {
-                    ui.heading("Hello World!");
-                    if ui.button("Quit").clicked() {
-                        quit = true;
-                    }
-                });
+                for layer in layer_stack.iter_mut().rev() {
+                    layer.on_ui_update(&egui);
+                }
 
                 let (needs_repaint, shapes) = egui.end_frame(gl_window.window());
-
-                *control_flow = if quit {
-                    glutin::event_loop::ControlFlow::Exit
-                } else if needs_repaint {
-                    gl_window.window().request_redraw();
-                    glutin::event_loop::ControlFlow::Poll
-                } else {
-                    glutin::event_loop::ControlFlow::Wait
-                };
 
                 {
                     // draw things behind egui here
@@ -128,7 +114,6 @@ impl App {
                             layer.on_tick(&mut renderer);
                         }
                     }
-
                     egui.paint(&gl_window, renderer.borrow_context(), shapes);
 
                     // draw things on top of egui here
