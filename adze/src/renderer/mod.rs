@@ -7,14 +7,15 @@ use nalgebra_glm::Mat4;
 
 use camera::OrthographicCamera;
 use shader::Shader;
+use texture::Texture;
 
 use crate::glm::{Vec2, Vec3, Vec4};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
-use crate::texture::Texture;
 
 pub mod buffer;
 pub mod camera;
 pub mod shader;
+pub mod texture;
 
 // Shader sources
 const TEXTURE_VS_SRC: &str = "

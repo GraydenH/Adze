@@ -6,7 +6,7 @@ use adze::renderer::camera::{OrthographicCamera, WasdCameraController};
 use adze::{glm, egui};
 use adze::glutin::event::VirtualKeyCode;
 use adze::glm::{Mat4, Vec2};
-use adze::texture::Texture;
+use adze::renderer::texture::Texture;
 use adze::timer::Timer;
 use adze::egui_glow::EguiGlow;
 
