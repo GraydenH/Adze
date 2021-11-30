@@ -1,6 +1,6 @@
 use std::str;
 use glow::HasContext;
-use crate::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
+use crate::renderer::buffer::{VertexBuffer, IndexBuffer, VertexArray, BufferLayout, BufferElement, ShaderDataType};
 use crate::shader::Shader;
 use crate::renderer::Renderer;
 use crate::layer::{LayerStack, Layer};

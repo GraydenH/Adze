@@ -1,6 +1,6 @@
 use core::mem;
 use glow::{HasContext, Buffer};
-use crate::buffer;
+use crate::renderer::buffer;
 use crate::renderer::QuadVertex;
 
 #[derive(Clone, Copy)]

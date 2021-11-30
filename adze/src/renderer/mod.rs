@@ -1,14 +1,17 @@
-use crate::buffer::{VertexArray, BufferLayout, BufferElement, VertexBuffer, IndexBuffer, ShaderDataType};
-use core::{ptr, mem};
+use core::{mem, ptr};
+
 use glow::{HasContext, PixelUnpackData};
-use crate::buffer;
-use crate::shader::Shader;
-use crate::camera::OrthographicCamera;
-use nalgebra_glm::Mat4;
+use image::{DynamicImage, GenericImageView};
 use nalgebra_glm as glm;
-use crate::glm::{Vec4, Vec3, Vec2};
-use image::{GenericImageView, DynamicImage};
+use nalgebra_glm::Mat4;
+
+use crate::camera::OrthographicCamera;
+use crate::glm::{Vec2, Vec3, Vec4};
+use crate::shader::Shader;
 use crate::texture::Texture;
+use crate::renderer::buffer::{BufferElement, BufferLayout, VertexArray, ShaderDataType, IndexBuffer, VertexBuffer};
+
+pub mod buffer;
 
 // Shader sources
 const TEXTURE_VS_SRC: &str = "
