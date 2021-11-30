@@ -3,7 +3,6 @@ pub use egui_glow;
 pub use glutin;
 pub use nalgebra_glm as glm;
 
-mod shader;
 pub mod texture;
 pub mod renderer;
 pub mod app;

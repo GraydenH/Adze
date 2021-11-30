@@ -12,7 +12,7 @@ use crate::glutin::event::ElementState;
 use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use crate::renderer::Renderer;
-use crate::shader::Shader;
+use crate::renderer::shader::Shader;
 use crate::app::layer::{LayerStack, Layer};
 
 pub mod event;
