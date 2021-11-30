@@ -5,6 +5,7 @@ use glow::HasContext;
 use glutin::dpi::PhysicalPosition;
 use glutin::event::{DeviceEvent, VirtualKeyCode};
 
+use crate::app::layer::{Layer, LayerStack};
 use crate::glm;
 use crate::glm::Vec2;
 use crate::glutin::dpi::LogicalPosition;
@@ -13,10 +14,10 @@ use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use crate::renderer::Renderer;
 use crate::renderer::shader::Shader;
-use crate::app::layer::{LayerStack, Layer};
 
 pub mod event;
 pub mod layer;
+pub mod timer;
 
 pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
 

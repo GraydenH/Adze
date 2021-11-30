@@ -7,7 +7,7 @@ use adze::{glm, egui};
 use adze::glutin::event::VirtualKeyCode;
 use adze::glm::{Mat4, Vec2};
 use adze::renderer::texture::Texture;
-use adze::timer::Timer;
+use adze::app::timer::Timer;
 use adze::egui_glow::EguiGlow;
 
 pub struct Editor {

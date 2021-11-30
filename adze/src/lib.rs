@@ -5,7 +5,6 @@ pub use nalgebra_glm as glm;
 
 pub mod renderer;
 pub mod app;
-pub mod timer;
 
 #[cfg(test)]
 mod tests {
