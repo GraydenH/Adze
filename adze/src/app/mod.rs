@@ -1,19 +1,11 @@
 use std::str;
 use std::time::Instant;
 
-use glow::HasContext;
-use glutin::dpi::PhysicalPosition;
 use glutin::event::{DeviceEvent, VirtualKeyCode};
 
 use crate::app::layer::{Layer, LayerStack};
-use crate::glm;
-use crate::glm::Vec2;
-use crate::glutin::dpi::LogicalPosition;
 use crate::glutin::event::ElementState;
-use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
-use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use crate::renderer::Renderer;
-use crate::renderer::shader::Shader;
 
 pub mod event;
 pub mod layer;
@@ -79,7 +71,7 @@ impl App {
         unsafe { return KEY_PRESSED [key_code as usize]; }
     }
 
-    pub fn run(mut self) {
+    pub fn run(self) {
         let event_loop = glutin::event_loop::EventLoop::with_user_event();
 
         let (gl_window, gl) = create_display(&event_loop, self.title.as_str());
@@ -95,7 +87,7 @@ impl App {
         let mut dt = clock.elapsed().as_secs_f32() - elapsed_time;
 
         event_loop.run(move |event, _, control_flow| {
-            use glutin::event::{Event, WindowEvent};
+            use glutin::event::{Event};
             use glutin::event_loop::ControlFlow;
 
             *control_flow = ControlFlow::Wait;
@@ -107,7 +99,7 @@ impl App {
                     layer.on_ui_update(&egui);
                 }
 
-                let (needs_repaint, shapes) = egui.end_frame(gl_window.window());
+                let (_needs_repaint, shapes) = egui.end_frame(gl_window.window());
 
                 {
                     // draw things behind egui here

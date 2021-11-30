@@ -1,4 +1,3 @@
-use core::mem;
 use glow::{HasContext, Buffer};
 use crate::renderer::buffer;
 use crate::renderer::QuadVertex;
@@ -244,18 +243,16 @@ impl VertexArray {
             index_buffer.bind(gl);
             vertex_buffer.bind(gl);
             for (index, element) in vertex_buffer.layout.elements.iter().enumerate() {
-                unsafe {
-                    // Specify the layout of the vertex data
-                    gl.enable_vertex_attrib_array(index as u32);
-                    gl.vertex_attrib_pointer_f32(
-                        index as u32,
-                        element.get_component_count(),
-                        to_opengl_type(element.data_type),
-                        false,
-                        vertex_buffer.layout.stride,
-                        element.offset,
-                    );
-                }
+                // Specify the layout of the vertex data
+                gl.enable_vertex_attrib_array(index as u32);
+                gl.vertex_attrib_pointer_f32(
+                    index as u32,
+                    element.get_component_count(),
+                    to_opengl_type(element.data_type),
+                    false,
+                    vertex_buffer.layout.stride,
+                    element.offset,
+                );
             }
             VertexArray {
                 vertex_buffer,

@@ -85,7 +85,7 @@ impl Texture {
             let internal_format = glow::RGBA8;
             let data_format = glow::RGBA;
 
-            let mut renderer_id = gl.create_texture().unwrap();
+            let renderer_id = gl.create_texture().unwrap();
 
             gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
 
@@ -112,7 +112,7 @@ impl Texture {
 
     pub fn from_data(gl: &glow::Context, data: Vec<u8>, width: u32, height: u32, internal_format: u32, data_format: u32) -> Self {
         unsafe {
-            let mut renderer_id = gl.create_texture().unwrap();
+            let renderer_id = gl.create_texture().unwrap();
 
             gl.bind_texture(glow::TEXTURE_2D, Some(renderer_id));
 

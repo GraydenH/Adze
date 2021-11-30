@@ -9,7 +9,7 @@ fn compile_shader(gl: &glow::Context, src: &str, ty: u32) -> glow::Shader {
         gl.compile_shader(shader);
 
         // Get the compile status
-        let mut status = gl.get_shader_compile_status(shader);
+        let status = gl.get_shader_compile_status(shader);
 
         // Fail on error
         if !status {
@@ -26,7 +26,7 @@ fn link_program(gl: &glow::Context, vs: glow::Shader, fs: glow::Shader) -> glow:
         gl.attach_shader(program, fs);
         gl.link_program(program);
         // Get the link status
-        let mut status = gl.get_program_link_status(program);
+        let status = gl.get_program_link_status(program);
 
         // Fail on error
         if !status {

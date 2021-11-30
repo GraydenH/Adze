@@ -1,8 +1,7 @@
 use adze::app::App;
 use adze::renderer::Renderer;
 use adze::glm;
-use adze::glutin::event::VirtualKeyCode;
-use adze::glm::{Mat4, Vec2};
+use adze::glm::{Vec2};
 use adze::renderer::camera::WasdCameraController;
 use adze::app::event::EventListener;
 use adze::app::layer::Layer;

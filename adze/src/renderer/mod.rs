@@ -1,9 +1,5 @@
-use core::{mem, ptr};
-
-use glow::{HasContext, PixelUnpackData};
-use image::{DynamicImage, GenericImageView};
+use glow::{HasContext};
 use nalgebra_glm as glm;
-use nalgebra_glm::Mat4;
 
 use camera::OrthographicCamera;
 use shader::Shader;
@@ -11,6 +7,7 @@ use texture::Texture;
 
 use crate::glm::{Vec2, Vec3, Vec4};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
+use core::mem;
 
 pub mod buffer;
 pub mod camera;
@@ -72,7 +69,6 @@ pub struct Renderer {
     gl: glow::Context,
     vertex_array: VertexArray,
     shader: Shader,
-    white_texture: Texture,
     quad_vertices: Vec<QuadVertex>,
     index_count: i32,
     textures: Vec<glow::Texture>
@@ -107,7 +103,7 @@ impl Renderer {
         }
 
         let index_buffer = IndexBuffer::new(&gl, indices);
-        let vertex_buffer = VertexBuffer::from_size(&gl, ((MAX_VERTICES * mem::size_of::<QuadVertex>()) as i32), layout);
+        let vertex_buffer = VertexBuffer::from_size(&gl, (MAX_VERTICES * mem::size_of::<QuadVertex>()) as i32, layout);
         let vertex_array = VertexArray::new(&gl, index_buffer, vertex_buffer);
 
         let white_texture = Texture::from_data(&gl, vec![255_u8, 255_u8, 255_u8, 255_u8], 1, 1, glow::RGBA8, glow::RGBA);
@@ -129,7 +125,6 @@ impl Renderer {
             gl,
             vertex_array,
             shader,
-            white_texture,
             quad_vertices: vec![],
             index_count: 0,
             textures: vec![white_texture_renderer_id]
@@ -158,7 +153,7 @@ impl Renderer {
     }
 
     fn reset(&mut self) {
-        for i in 1..self.textures.len() {
+        for _ in 1..self.textures.len() {
             self.textures.pop();
         }
         self.quad_vertices = Vec::new();
