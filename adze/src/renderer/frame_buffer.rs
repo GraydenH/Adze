@@ -34,7 +34,9 @@ impl FrameBuffer {
 
             let depth_attachment = gl.create_texture().unwrap();
             gl.bind_texture(glow::TEXTURE_2D, Some(depth_attachment));
-            gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::DEPTH24_STENCIL8, width as i32, height as i32);
+
+            //gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::DEPTH24_STENCIL8, self.width as i32, self.height as i32);
+            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::DEPTH24_STENCIL8 as i32, width as i32, height as i32, 0, glow::DEPTH_STENCIL, glow::UNSIGNED_INT_24_8, None);
             // glTexImage2D(glow::TEXTURE_2D, 0, glow::DEPTH24_STENCIL8, m_Specification.Width, m_Specification.Height, 0,
             // 	glow::DEPTH_STENCIL, glow::UNSIGNED_INT_24_8, NULL);
             gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::DEPTH_STENCIL_ATTACHMENT, glow::TEXTURE_2D, Some(depth_attachment), 0);
@@ -69,9 +71,11 @@ impl FrameBuffer {
             gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(self.color_attachment), 0);
 
             gl.bind_texture(glow::TEXTURE_2D, Some(self.depth_attachment));
-            gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::DEPTH24_STENCIL8, self.width as i32, self.height as i32);
+
             // glTexImage2D(glow::TEXTURE_2D, 0, glow::DEPTH24_STENCIL8, m_Specification.Width, m_Specification.Height, 0,
             // 	glow::DEPTH_STENCIL, glow::UNSIGNED_INT_24_8, NULL);
+            //gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::DEPTH24_STENCIL8, self.width as i32, self.height as i32);
+            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::DEPTH24_STENCIL8 as i32, self.width as i32, self.height as i32, 0, glow::DEPTH_STENCIL, glow::UNSIGNED_INT_24_8, None);
             gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::DEPTH_STENCIL_ATTACHMENT, glow::TEXTURE_2D, Some(self.depth_attachment), 0);
 
             //HZ_CORE_ASSERT(glCheckFramebufferStatus(glow::FRAMEBUFFER) == glow::FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
