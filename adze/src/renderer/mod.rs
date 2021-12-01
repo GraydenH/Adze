@@ -135,9 +135,15 @@ impl Renderer {
     fn init(gl: &glow::Context) {
         unsafe {
             gl.enable(glow::BLEND);
-            gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
-
             gl.enable(glow::DEPTH_TEST);
+            gl.enable(glow::DEBUG_OUTPUT);
+            gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+            gl.debug_message_callback(|source: u32, error_type: u32, id: u32, severity: u32, message: &str| {
+                println!(
+                    "source: {}, error_type: {}, id: {}, severity: {}, message: {}",
+                    source, error_type, id, severity, message
+                );
+            });
         }
     }
 
