@@ -13,6 +13,7 @@ pub mod buffer;
 pub mod camera;
 pub mod shader;
 pub mod texture;
+pub mod frame_buffer;
 
 // Shader sources
 const TEXTURE_VS_SRC: &str = "
