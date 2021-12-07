@@ -5,7 +5,7 @@ use glutin::event::{DeviceEvent, VirtualKeyCode};
 
 use crate::app::layer::{Layer, LayerStack};
 use crate::glutin::event::ElementState;
-use crate::renderer::Renderer2D;
+use crate::renderer::{Renderer};
 
 pub mod event;
 pub mod layer;
@@ -30,7 +30,7 @@ fn create_display(
 
     let gl_window = unsafe {
         glutin::ContextBuilder::new()
-            .with_depth_buffer(0)
+            .with_depth_buffer(24)
             .with_srgb(true)
             .with_stencil_buffer(0)
             .with_vsync(true)
@@ -78,7 +78,11 @@ impl App {
 
         let mut egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
-        let mut renderer = Renderer2D::new(gl);
+        let mut renderer = Renderer::new(gl);
+        //let mut renderer_2d = Renderer2D::new(gl);
+
+        //renderer.init();
+
         let mut layer_stack = self.layer_stack;
 
         let clock = Instant::now();

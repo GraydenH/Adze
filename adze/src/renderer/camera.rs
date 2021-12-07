@@ -148,3 +148,44 @@ impl WasdCameraController {
         }
     }
 }
+
+pub struct PerspectiveCamera {
+    projection: Mat4,
+    view: Mat4,
+    model: Mat4,
+}
+
+impl PerspectiveCamera {
+    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32) -> Self {
+        let projection = Mat4::new_perspective(aspect, fovy, znear, zfar);
+        PerspectiveCamera {
+            projection,
+            view: glm::identity(),
+            model: glm::identity()
+        }
+    }
+
+    pub fn recalculate_matrix(&mut self) {
+        self.view = glm::translate(&self.view, &glm::vec3(0.0, -0.5, -2.0));
+    }
+}
+
+pub struct FlyingCameraController {
+    camera: PerspectiveCamera,
+}
+
+impl FlyingCameraController {
+    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32) -> Self {
+        FlyingCameraController {
+            camera: PerspectiveCamera::new(aspect, fovy, znear, zfar),
+        }
+    }
+
+    pub fn camera(&self) -> &PerspectiveCamera {
+        &self.camera
+    }
+
+    pub fn recalculate_matrix(&mut self) {
+        self.camera.recalculate_matrix();
+    }
+}

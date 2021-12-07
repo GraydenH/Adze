@@ -1,6 +1,6 @@
 use glow::{HasContext, Buffer};
 use crate::renderer::buffer;
-use crate::renderer::QuadVertex;
+use crate::renderer::renderer_2d::QuadVertex;
 
 #[derive(Clone, Copy)]
 pub enum ShaderDataType {
