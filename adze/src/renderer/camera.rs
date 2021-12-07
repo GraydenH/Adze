@@ -160,6 +160,7 @@ pub struct PerspectiveCamera {
     fovy: f32,
     znear: f32,
     zfar: f32,
+    speed: f32
 }
 
 impl PerspectiveCamera {
@@ -171,6 +172,7 @@ impl PerspectiveCamera {
             up: glm::vec3(0.0, 1.0, 0.0),
             orientation: glm::vec3(0.0, 0.0, -1.0),
             position: glm::vec3(0.0, 0.0, 2.0),
+            speed: 0.1,
             aspect,
             fovy,
             znear,
@@ -201,13 +203,23 @@ impl PerspectiveCamera {
 
     pub fn on_tick(&mut self) {
         if App::is_key_pressed(VirtualKeyCode::A) {
-            self.set_position(self.position() + glm::vec3(-0.01, 0.0, 0.0));
+            self.set_position(self.position() + self.speed * -glm::normalize(&glm::cross(&self.orientation, &self.up)));
         } else if App::is_key_pressed(VirtualKeyCode::D) {
-            self.set_position(self.position() + glm::vec3(0.01, 0.0, 0.0));
+            self.set_position(self.position() + self.speed * glm::normalize(&glm::cross(&self.orientation, &self.up)));
         } else if App::is_key_pressed(VirtualKeyCode::W) {
-            self.set_position(self.position() + glm::vec3(0.0, 0.01, 0.0));
+            self.set_position(self.position() + self.speed * self.orientation);
         } else if App::is_key_pressed(VirtualKeyCode::S) {
-            self.set_position(self.position() + glm::vec3(0.0, -0.01, 0.0));
+            self.set_position(self.position() + self.speed * -self.orientation);
+        } else if App::is_key_pressed(VirtualKeyCode::Space) {
+            self.set_position(self.position() + self.speed * self.up);
+        } else if App::is_key_pressed(VirtualKeyCode::LControl) {
+            self.set_position(self.position() + self.speed * -self.up);
+        }
+
+        if App::is_key_pressed(VirtualKeyCode::LShift) {
+            self.speed = 0.4;
+        } else {
+            self.speed = 0.1;
         }
     }
 }
@@ -233,5 +245,9 @@ impl FlyingCameraController {
 
     pub fn on_tick(&mut self) {
         self.camera.on_tick();
+    }
+
+    pub fn set_position(&mut self, value: Vec3) {
+        self.camera.set_position(value);
     }
 }
