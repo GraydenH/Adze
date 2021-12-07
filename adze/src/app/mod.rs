@@ -5,7 +5,7 @@ use glutin::event::{DeviceEvent, VirtualKeyCode};
 
 use crate::app::layer::{Layer, LayerStack};
 use crate::glutin::event::ElementState;
-use crate::renderer::Renderer;
+use crate::renderer::Renderer2D;
 
 pub mod event;
 pub mod layer;
@@ -78,7 +78,7 @@ impl App {
 
         let mut egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
-        let mut renderer = Renderer::new(gl);
+        let mut renderer = Renderer2D::new(gl);
         let mut layer_stack = self.layer_stack;
 
         let clock = Instant::now();

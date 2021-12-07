@@ -1,5 +1,5 @@
 use adze::app::App;
-use adze::renderer::Renderer;
+use adze::renderer::Renderer2D;
 use adze::app::event::EventListener;
 use adze::app::layer::Layer;
 use adze::renderer::camera::{OrthographicCamera, WasdCameraController};

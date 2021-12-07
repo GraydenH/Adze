@@ -1,12 +1,12 @@
 
-use crate::renderer::Renderer;
+use crate::renderer::Renderer2D;
 use glutin::event::VirtualKeyCode;
 use crate::glm::Vec2;
 use egui_glow::EguiGlow;
 
 // https://github.com/mathiasmagnusson
 pub trait EventListener {
-    fn on_tick(&mut self, _renderer: &mut Renderer) {}
+    fn on_tick(&mut self, _renderer: &mut Renderer2D) {}
     fn on_ui_update(&mut self, _egui: &EguiGlow) {}
     fn on_window_closed(&mut self) {}
     fn on_window_resize(&mut self, _width: u32, _height: u32) {}

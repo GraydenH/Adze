@@ -65,7 +65,7 @@ pub struct QuadVertex {
     texture_index: f32
 }
 
-pub struct Renderer {
+pub struct Renderer2D {
     gl: glow::Context,
     vertex_array: VertexArray,
     shader: Shader,
@@ -74,8 +74,8 @@ pub struct Renderer {
     textures: Vec<glow::Texture>
 }
 
-impl Renderer {
-    pub fn new(gl: glow::Context) -> Renderer {
+impl Renderer2D {
+    pub fn new(gl: glow::Context) -> Renderer2D {
         let shader = Shader::new(&gl, TEXTURE_VS_SRC, TEXTURE_FS_SRC);
         shader.bind(&gl);
 
@@ -119,9 +119,9 @@ impl Renderer {
 
         shader.upload_uniform_int_array(&gl, "utextures", samplers);
 
-        Renderer::init(&gl);
+        Renderer2D::init(&gl);
 
-        Renderer {
+        Renderer2D {
             gl,
             vertex_array,
             shader,
