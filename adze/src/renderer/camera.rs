@@ -153,20 +153,62 @@ pub struct PerspectiveCamera {
     projection: Mat4,
     view: Mat4,
     model: Mat4,
+    up: Vec3,
+    orientation: Vec3,
+    position: Vec3,
+    aspect: f32,
+    fovy: f32,
+    znear: f32,
+    zfar: f32,
 }
 
 impl PerspectiveCamera {
     pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32) -> Self {
-        let projection = Mat4::new_perspective(aspect, fovy, znear, zfar);
         PerspectiveCamera {
-            projection,
+            projection: Mat4::new_perspective(aspect, fovy, znear, zfar),
             view: glm::identity(),
-            model: glm::identity()
+            model: glm::identity(),
+            up: glm::vec3(0.0, 1.0, 0.0),
+            orientation: glm::vec3(0.0, 0.0, -1.0),
+            position: glm::vec3(0.0, 0.0, 2.0),
+            aspect,
+            fovy,
+            znear,
+            zfar,
         }
     }
 
     pub fn recalculate_matrix(&mut self) {
-        self.view = glm::translate(&self.view, &glm::vec3(0.0, -0.5, -2.0));
+        self.view = glm::look_at_rh(&self.position, &(self.position + self.orientation), &self.up);
+        self.projection = glm::perspective(self.aspect, self.fovy, self.znear, self.zfar);
+    }
+
+    pub fn projection(&self) -> Mat4 {
+        self.projection
+    }
+
+    pub fn view(&self) -> Mat4 {
+        self.view
+    }
+
+    fn set_position(&mut self, value: Vec3) {
+        self.position = value;
+    }
+
+    fn position(&self) -> Vec3 {
+        self.position
+    }
+
+    pub fn on_tick(&mut self) {
+        if App::is_key_pressed(VirtualKeyCode::A) {
+            self.set_position(self.position() + glm::vec3(-0.01, 0.0, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::D) {
+            self.set_position(self.position() + glm::vec3(0.01, 0.0, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::W) {
+            self.set_position(self.position() + glm::vec3(0.0, 0.01, 0.0));
+        } else if App::is_key_pressed(VirtualKeyCode::S) {
+            self.set_position(self.position() + glm::vec3(0.0, -0.01, 0.0));
+        }
     }
 }
 
@@ -187,5 +229,9 @@ impl FlyingCameraController {
 
     pub fn recalculate_matrix(&mut self) {
         self.camera.recalculate_matrix();
+    }
+
+    pub fn on_tick(&mut self) {
+        self.camera.on_tick();
     }
 }

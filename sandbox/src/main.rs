@@ -17,7 +17,7 @@ impl Sandbox {
     pub fn new() -> Self {
         let _timer = Timer::new("SandBox::new");
 
-        let mut camera_controller = FlyingCameraController::new(0.785398, (800.0 / 600.0), 0.1, 100.0);
+        let mut camera_controller = FlyingCameraController::new((800.0 / 600.0), 45.0, 0.1, 100.0);
 
         Sandbox {
             camera_controller,
@@ -32,6 +32,7 @@ impl EventListener for Sandbox {
 
         self.rotation += 0.01;
 
+        self.camera_controller.on_tick();
         self.camera_controller.recalculate_matrix();
 
         renderer.clear();

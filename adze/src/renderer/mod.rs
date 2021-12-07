@@ -36,13 +36,11 @@ impl Renderer {
                 out vec3 color;
                 out vec2 texture_coordinate;
 
-                uniform mat4 model;
-                uniform mat4 view;
-                uniform mat4 projection;
+                uniform mat4 camera;
 
                 void main()
                 {
-                    gl_Position = projection * view * model * vec4(aposition, 1.0);
+                    gl_Position = camera * vec4(aposition, 1.0);
                     color = acolor;
                     texture_coordinate = atexture_coordinate;
                 }
@@ -111,6 +109,9 @@ impl Renderer {
     }
 
     pub fn begin(&mut self, camera: &PerspectiveCamera) {
+        self.shader.bind(&self.gl);
+        self.shader.upload_uniform_mat4(&self.gl, "camera",  &(camera.projection() * camera.view()));
+
     }
 
     pub fn end(&mut self) {
@@ -119,9 +120,6 @@ impl Renderer {
     pub fn draw(&self, rotation: f32) {
         unsafe {
             self.shader.bind(&self.gl);
-            self.shader.upload_uniform_mat4(&self.gl, "model",  &glm::rotate(&glm::identity(), rotation, &glm::vec3(0.0, 1.0, 0.0)));
-            self.shader.upload_uniform_mat4(&self.gl, "view",  &glm::translate(&glm::identity(), &glm::vec3(0.0, -0.5, -2.0)));
-            self.shader.upload_uniform_mat4(&self.gl, "projection",  &Mat4::new_perspective((800.0 / 600.0), 45.0, 0.01, 100.0));
 
             Texture::bind(&self.gl, self.texture.get_renderer_id().unwrap(), 0);
 
