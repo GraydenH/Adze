@@ -10,18 +10,22 @@ use adze::app::timer::Timer;
 
 pub struct Sandbox {
     camera_controller: FlyingCameraController,
-    rotation: f32
+    rotation: f32,
+    width: u32,
+    height: u32
 }
 
 impl Sandbox {
-    pub fn new() -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         let _timer = Timer::new("SandBox::new");
 
-        let mut camera_controller = FlyingCameraController::new((800.0 / 600.0), 45.0, 0.1, 100.0);
+        let mut camera_controller = FlyingCameraController::new((width as f32 / height as f32), 45.0, 0.1, 100.0, width, height);
 
         Sandbox {
             camera_controller,
-            rotation: 0.0
+            rotation: 0.0,
+            width,
+            height
         }
     }
 }
@@ -40,6 +44,11 @@ impl EventListener for Sandbox {
         renderer.draw(self.rotation);
         renderer.end();
     }
+
+    fn on_mouse_move(&mut self, position: Vec2) -> bool {
+        self.camera_controller.on_mouse_move(position);
+        false
+    }
 }
 
 impl Layer for Sandbox {
@@ -53,8 +62,10 @@ impl Layer for Sandbox {
 }
 
 fn main() {
-    let mut app = App::new("sandbox");
-    let sandbox = Box::new(Sandbox::new());
+    let width = 800;
+    let height = 600;
+    let mut app = App::new("sandbox", width, height);
+    let sandbox = Box::new(Sandbox::new(width, height));
     app.push_layer(sandbox);
     app.run();
 }

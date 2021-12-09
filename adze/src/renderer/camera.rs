@@ -1,7 +1,7 @@
 use nalgebra_glm as glm;
 use glm::{Mat4, Vec3, Vec2};
 use crate::app::App;
-use crate::glutin::event::VirtualKeyCode;
+use crate::glutin::event::{VirtualKeyCode, MouseButton};
 
 pub struct OrthographicCamera {
     projection: Mat4,
@@ -156,15 +156,18 @@ pub struct PerspectiveCamera {
     up: Vec3,
     orientation: Vec3,
     position: Vec3,
+    width: u32,
+    height: u32,
+    speed: f32,
+    sensitivity: f32,
     aspect: f32,
     fovy: f32,
     znear: f32,
     zfar: f32,
-    speed: f32
 }
 
 impl PerspectiveCamera {
-    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32) -> Self {
+    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32, width: u32, height: u32) -> Self {
         PerspectiveCamera {
             projection: Mat4::new_perspective(aspect, fovy, znear, zfar),
             view: glm::identity(),
@@ -173,6 +176,9 @@ impl PerspectiveCamera {
             orientation: glm::vec3(0.0, 0.0, -1.0),
             position: glm::vec3(0.0, 0.0, 2.0),
             speed: 0.1,
+            sensitivity: 1.0,
+            width,
+            height,
             aspect,
             fovy,
             znear,
@@ -222,6 +228,21 @@ impl PerspectiveCamera {
             self.speed = 0.1;
         }
     }
+
+    fn on_mouse_move(&mut self, delta: Vec2) {
+        if App::is_mouse_button_pressed(MouseButton::Left) {
+            //switch x and y?
+            let rotx = self.sensitivity * delta.get(1).unwrap() / self.height as f32;
+            let roty = self.sensitivity * delta.get(0).unwrap() / self.width as f32;
+
+           let new_orientation = glm::rotate_vec3(&self.orientation, -rotx, &glm::normalize(&glm::cross(&self.orientation, &self.up)));
+            if (glm::angle(&new_orientation, &self.up) - 90.0_f32.to_radians()).abs() <= 85.0_f32.to_radians() {
+                self.orientation = new_orientation;
+            }
+
+            self.orientation = glm::rotate_vec3(&self.orientation, -roty, &self.up);
+        }
+    }
 }
 
 pub struct FlyingCameraController {
@@ -229,9 +250,9 @@ pub struct FlyingCameraController {
 }
 
 impl FlyingCameraController {
-    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32) -> Self {
+    pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32, width: u32, height: u32) -> Self {
         FlyingCameraController {
-            camera: PerspectiveCamera::new(aspect, fovy, znear, zfar),
+            camera: PerspectiveCamera::new(aspect, fovy, znear, zfar, width, height),
         }
     }
 
@@ -249,5 +270,9 @@ impl FlyingCameraController {
 
     pub fn set_position(&mut self, value: Vec3) {
         self.camera.set_position(value);
+    }
+
+    pub fn on_mouse_move(&mut self, position: Vec2) {
+        self.camera.on_mouse_move(position);
     }
 }

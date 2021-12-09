@@ -4,18 +4,37 @@ use std::time::Instant;
 use glutin::event::{DeviceEvent, VirtualKeyCode};
 
 use crate::app::layer::{Layer, LayerStack};
-use crate::glutin::event::ElementState;
+use crate::glutin::event::{ElementState, MouseButton};
 use crate::renderer::{Renderer};
+use crate::glm;
+use crate::glutin::event::MouseScrollDelta::{LineDelta, PixelDelta};
+use glutin::event::WindowEvent::MouseInput;
+use glutin::dpi::Size::Physical;
+use glutin::dpi::PhysicalPosition;
 
 pub mod event;
 pub mod layer;
 pub mod timer;
 
-pub static mut KEY_PRESSED: [bool; 149] = [false; 149];
+static mut KEY_PRESSED: [bool; 149] = [false; 149];
+
+pub struct MouseState {
+    left: bool,
+    right: bool,
+    middle: bool,
+}
+
+static mut MOUSE_STATE: MouseState = MouseState{
+    left: false,
+    right: false,
+    middle: false
+};
 
 fn create_display(
     event_loop: &glutin::event_loop::EventLoop<()>,
-    title: &str
+    title: &str,
+    width: u32,
+    height: u32
 ) -> (
     glutin::WindowedContext<glutin::PossiblyCurrent>,
     glow::Context,
@@ -23,8 +42,8 @@ fn create_display(
     let window_builder = glutin::window::WindowBuilder::new()
         .with_resizable(true)
         .with_inner_size(glutin::dpi::LogicalSize {
-            width: 800.0,
-            height: 600.0,
+            width,
+            height,
         })
         .with_title(title);
 
@@ -52,14 +71,18 @@ fn create_display(
 
 pub struct App {
     title: String,
-    layer_stack: LayerStack
+    layer_stack: LayerStack,
+    width: u32,
+    height: u32
 }
 
 impl App {
-    pub fn new(title: &str) -> App {
+    pub fn new(title: &str, width: u32, height: u32) -> App {
         App {
             title: String::from(title),
-            layer_stack: LayerStack::new()
+            layer_stack: LayerStack::new(),
+            width,
+            height
         }
     }
 
@@ -71,10 +94,21 @@ impl App {
         unsafe { return KEY_PRESSED [key_code as usize]; }
     }
 
+    pub fn is_mouse_button_pressed(mouse_button: MouseButton) -> bool {
+        unsafe {
+            return match mouse_button {
+                MouseButton::Left => MOUSE_STATE.left,
+                MouseButton::Right => MOUSE_STATE.right,
+                MouseButton::Middle => MOUSE_STATE.middle,
+                _ => { false }
+            }
+        }
+    }
+
     pub fn run(self) {
         let event_loop = glutin::event_loop::EventLoop::with_user_event();
 
-        let (gl_window, gl) = create_display(&event_loop, self.title.as_str());
+        let (gl_window, gl) = create_display(&event_loop, self.title.as_str(), self.width, self.height);
 
         let mut egui = egui_glow::EguiGlow::new(&gl_window, &gl);
 
@@ -82,6 +116,9 @@ impl App {
         //let mut renderer_2d = Renderer2D::new(gl);
 
         //renderer.init();
+
+        let height = self.height;
+        let width = self.width;
 
         let mut layer_stack = self.layer_stack;
 
@@ -125,12 +162,35 @@ impl App {
             };
 
             match event {
-                Event::RedrawEventsCleared if cfg!(windows) => redraw(),
-                Event::RedrawRequested(_) if !cfg!(windows) => redraw(),
+                Event::RedrawEventsCleared if cfg!(windows) => {
+                    redraw();
+                    gl_window.window().request_redraw();
+                },
+                Event::RedrawRequested(_) if !cfg!(windows) => {
+                    redraw();
+                    gl_window.window().request_redraw();
+                },
                 Event::MainEventsCleared => {
+                    redraw();
                     gl_window.window().request_redraw();
                 },
                 Event::DeviceEvent { event, ..} => match event {
+                    DeviceEvent::MouseMotion { delta} => {
+                        for layer in layer_stack.iter_mut().rev() {
+                            layer.on_mouse_move(glm::vec2(delta.0 as f32, delta.1 as f32));
+                        }
+                        //gl_window.window().set_cursor_position(PhysicalPosition::new(height/ 2, width/2));
+                    },
+                    DeviceEvent::MouseWheel { delta } => {
+                        let mut result = match delta {
+                            LineDelta(x, y) => glm::vec2(x, y),
+                            PixelDelta(pos) => glm::vec2(pos.x as f32, pos.y as f32)
+                        };
+
+                        for layer in layer_stack.iter_mut().rev() {
+                            layer.on_mouse_scroll(result);
+                        }
+                    },
                     DeviceEvent::Key(input) => unsafe {
                         if let Some(keycode) = input.virtual_keycode {
                             let index = keycode as u16;
@@ -152,6 +212,24 @@ impl App {
                     _ => {}
                 },
                 Event::WindowEvent { event, .. } => {
+                    match event {
+                        MouseInput { button, state, .. } => {
+                            match button {
+                                MouseButton::Left => {
+                                    unsafe { MOUSE_STATE.left = state == ElementState::Pressed}
+                                },
+                                MouseButton::Right => {
+                                    unsafe { MOUSE_STATE.right = state == ElementState::Pressed}
+                                },
+                                MouseButton::Middle => {
+                                    unsafe { MOUSE_STATE.middle = state == ElementState::Pressed}
+                                },
+                                _ => {}
+                            }
+                        },
+                        _ => {}
+                    }
+
                     if egui.is_quit_event(&event) {
                         *control_flow = glutin::event_loop::ControlFlow::Exit;
                     }
@@ -165,7 +243,8 @@ impl App {
                     gl_window.window().request_redraw(); // TODO: ask egui if the events warrants a repaint instead
                 }
                 Event::RedrawRequested(_) => {
-                    //gl_window.swap_buffers().unwrap();
+                    //redraw();
+                    gl_window.swap_buffers().unwrap();
                 },
                 Event::LoopDestroyed => {
                     egui.destroy(&renderer.borrow_context());
