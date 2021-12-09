@@ -36,11 +36,11 @@ impl Renderer {
                 out vec3 color;
                 out vec2 texture_coordinate;
 
-                uniform mat4 camera;
+                uniform mat4 projection_view;
 
                 void main()
                 {
-                    gl_Position = camera * vec4(aposition, 1.0);
+                    gl_Position = projection_view * vec4(aposition, 1.0);
                     color = acolor;
                     texture_coordinate = atexture_coordinate;
                 }
@@ -110,7 +110,7 @@ impl Renderer {
 
     pub fn begin(&mut self, camera: &PerspectiveCamera) {
         self.shader.bind(&self.gl);
-        self.shader.upload_uniform_mat4(&self.gl, "camera",  &(camera.projection() * camera.view()));
+        self.shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
 
     }
 

@@ -150,9 +150,7 @@ impl WasdCameraController {
 }
 
 pub struct PerspectiveCamera {
-    projection: Mat4,
-    view: Mat4,
-    model: Mat4,
+    projection_view: Mat4,
     up: Vec3,
     orientation: Vec3,
     position: Vec3,
@@ -169,9 +167,7 @@ pub struct PerspectiveCamera {
 impl PerspectiveCamera {
     pub fn new(aspect: f32, fovy: f32, znear: f32, zfar: f32, width: u32, height: u32) -> Self {
         PerspectiveCamera {
-            projection: Mat4::new_perspective(aspect, fovy, znear, zfar),
-            view: glm::identity(),
-            model: glm::identity(),
+            projection_view: glm::identity(),
             up: glm::vec3(0.0, 1.0, 0.0),
             orientation: glm::vec3(0.0, 0.0, -1.0),
             position: glm::vec3(0.0, 0.0, 2.0),
@@ -187,16 +183,13 @@ impl PerspectiveCamera {
     }
 
     pub fn recalculate_matrix(&mut self) {
-        self.view = glm::look_at_rh(&self.position, &(self.position + self.orientation), &self.up);
-        self.projection = glm::perspective(self.aspect, self.fovy, self.znear, self.zfar);
+        let view = glm::look_at_rh(&self.position, &(self.position + self.orientation), &self.up);
+        let projection = glm::perspective(self.aspect, self.fovy, self.znear, self.zfar);
+        self.projection_view = projection * view;
     }
 
-    pub fn projection(&self) -> Mat4 {
-        self.projection
-    }
-
-    pub fn view(&self) -> Mat4 {
-        self.view
+    pub fn projection_view(&self) -> Mat4 {
+        self.projection_view
     }
 
     fn set_position(&mut self, value: Vec3) {
