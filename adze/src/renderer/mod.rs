@@ -182,8 +182,32 @@ impl Renderer {
                     return light_color * (texture(tex0, texture_coordinate) * vec4(sum, sum, sum, 1.0f) + texture(tex1, texture_coordinate).r * specular);
                 }
 
+                vec4 spotLight() {
+                    float outer_cone = 0.90f;
+                    float inner_cone = 0.95f;
+
+                    float ambient = 0.20f;
+
+                    vec3 n = normalize(normal);
+                    vec3 light_direction = normalize(light_position - current_position);
+                    float diffuse = max(dot(n, light_direction), 0.0f);
+
+                    float specular_light = 0.50f;
+                    vec3 view_direction = normalize(camera_position - current_position);
+                    vec3 reflection_direction = reflect(-light_direction, normal);
+                    float specular_factor = pow(max(dot(view_direction, reflection_direction), 0.0f), 8);
+                    float specular = specular_factor * specular_light;
+
+                    float angle = dot(vec3(0.0f, -1.0f, 0.0f), -light_direction);
+                    float intensity = clamp((angle - outer_cone) / (inner_cone - outer_cone), 0.0f, 1.0f);
+
+                    float sum = diffuse * intensity + ambient;
+
+                    return light_color * (texture(tex0, texture_coordinate) * vec4(sum, sum, sum, 1.0f) + texture(tex1, texture_coordinate).r * specular * intensity);
+                }
+
                 void main() {
-                    FragColor = directionalLight();
+                    FragColor = spotLight();
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
