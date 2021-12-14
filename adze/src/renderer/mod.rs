@@ -272,7 +272,7 @@ impl Renderer {
 
     pub fn clear(&self) {
         unsafe {
-            self.gl.clear_color(0.3, 0.3, 0.3, 1.0);
+            self.gl.clear_color(0.07, 0.13, 0.17, 1.0);
             self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
             self.gl.clear_depth_f64(1.0);
             self.gl.depth_func(glow::LESS);
