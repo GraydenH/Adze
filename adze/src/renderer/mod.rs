@@ -162,8 +162,28 @@ impl Renderer {
                     return light_color * (texture(tex0, texture_coordinate) * vec4(sum, sum, sum, 1.0f) + texture(tex1, texture_coordinate).r * specular * intensity);
                 }
 
+                vec4 directionalLight() {
+                    float ambient = 0.20f;
+
+                    vec3 n = normalize(normal);
+                    // make uniform
+                    vec3 direction = vec3(1.0f, 1.0f, 0.0f);
+                    vec3 light_direction = normalize(direction);
+                    float diffuse = max(dot(n, light_direction), 0.0f);
+
+                    float specular_light = 0.50f;
+                    vec3 view_direction = normalize(camera_position - current_position);
+                    vec3 reflection_direction = reflect(-light_direction, normal);
+                    float specular_factor = pow(max(dot(view_direction, reflection_direction), 0.0f), 8);
+                    float specular = specular_factor * specular_light;
+
+                    float sum = diffuse + ambient;
+
+                    return light_color * (texture(tex0, texture_coordinate) * vec4(sum, sum, sum, 1.0f) + texture(tex1, texture_coordinate).r * specular);
+                }
+
                 void main() {
-                    FragColor = pointLight();
+                    FragColor = directionalLight();
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
