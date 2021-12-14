@@ -138,12 +138,17 @@ impl Renderer {
                 uniform vec3 light_position;
                 uniform vec3 camera_position;
 
-                void main()
-                {
+                vec4 pointLight() {
+                    vec3 light = light_position - current_position;
+                    float distance = length(light);
+                    float a = 3.0;
+                    float b = 0.7;
+                    float intensity = 1.0 / (a * distance * distance + b * distance + 1.0f);
+
                     float ambient = 0.20f;
 
                     vec3 n = normalize(normal);
-                    vec3 light_direction = normalize(light_position - current_position);
+                    vec3 light_direction = normalize(light);
                     float diffuse = max(dot(n, light_direction), 0.0f);
 
                     float specular_light = 0.50f;
@@ -152,7 +157,13 @@ impl Renderer {
                     float specular_factor = pow(max(dot(view_direction, reflection_direction), 0.0f), 8);
                     float specular = specular_factor * specular_light;
 
-                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient, diffuse + ambient, diffuse + ambient, 1.0f) + texture(tex1, texture_coordinate).r * specular;
+                    float sum = diffuse * intensity + ambient;
+
+                    return light_color * (texture(tex0, texture_coordinate) * vec4(sum, sum, sum, 1.0f) + texture(tex1, texture_coordinate).r * specular * intensity);
+                }
+
+                void main() {
+                    FragColor = pointLight();
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
