@@ -23,6 +23,8 @@ pub struct Renderer {
     vertex_array: VertexArray,
     light_shader: Shader,
     light_vertex_array: VertexArray,
+    light_color: Vec4,
+    light_position: Vec3,
 }
 
 impl Renderer {
@@ -122,10 +124,11 @@ impl Renderer {
 
                 // Gets the Texture Unit from the main function
                 uniform sampler2D tex0;
+                uniform vec4 light_color;
 
                 void main()
                 {
-                    FragColor = texture(tex0, texture_coordinate);
+                    FragColor = texture(tex0, texture_coordinate) * light_color;
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
@@ -169,13 +172,16 @@ impl Renderer {
             texture,
             vertex_array,
             light_shader,
-            light_vertex_array
+            light_vertex_array,
+            light_color: glm::vec4(1.0, 1.0, 1.0, 1.0),
+            light_position: glm::vec3(1.0, 1.0, 1.0)
         }
     }
 
     pub fn begin(&mut self, camera: &PerspectiveCamera) {
         self.shader.bind(&self.gl);
         self.shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
+        self.shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
         self.light_shader.bind(&self.gl);
         self.light_shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
 
@@ -188,6 +194,7 @@ impl Renderer {
         unsafe {
             self.shader.bind(&self.gl);
             self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
+            self.shader.upload_uniform_float4(&self.gl, "light_color",  self.light_color);
 
             Texture::bind(&self.gl, self.texture.get_renderer_id().unwrap(), 0);
 
@@ -197,14 +204,15 @@ impl Renderer {
         }
     }
 
-    pub fn draw_light(&self, position: Vec3) {
+    pub fn draw_light(&mut self, position: Vec3, color: Vec4) {
         unsafe {
             self.light_shader.bind(&self.gl);
 
             let translate = glm::translate(&glm::identity(), &position);
 
             self.light_shader.upload_uniform_mat4(&self.gl, "model",  &translate);
-            self.light_shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
+            self.light_shader.upload_uniform_float4(&self.gl, "light_color",  color);
+            self.light_color = color;
 
             self.light_vertex_array.bind(&self.gl);
 
