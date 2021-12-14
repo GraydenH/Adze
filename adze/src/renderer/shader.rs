@@ -52,57 +52,81 @@ impl Shader {
 
     pub fn upload_uniform_integer1(&self, gl: &glow::Context, name: &str, value: i32) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_1_i32(Some(&location), value);
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_1_i32(Some(&l), value),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_float1(&self, gl: &glow::Context, name: &str, value: f32) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_1_f32(Some(&location), value);
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_1_f32(Some(&l), value),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_float2(&self, gl: &glow::Context, name: &str, value: Vec2) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_2_f32(Some(&location), value.x, value.y);
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_2_f32(Some(&l), value.x, value.y),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_float3(&self, gl: &glow::Context, name: &str, value: Vec3) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_3_f32(Some(&location), value.x, value.y, value.z);
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_3_f32(Some(&l), value.x, value.y, value.z),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_float4(&self, gl: &glow::Context, name: &str, value: Vec4) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_4_f32(Some(&location), value.x, value.y, value.z, value.w);
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_4_f32(Some(&l), value.x, value.y, value.z, value.w),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_int_array(&self, gl: &glow::Context, name: &str, values: Vec<i32>) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_1_i32_slice(Some(&location), values.as_slice());
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_1_i32_slice(Some(&l), values.as_slice()),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_matrix3(&self, gl: &glow::Context, name: &str, matrix: &Mat3) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_matrix_3_f32_slice(Some(&location), false, matrix.as_slice());
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_matrix_3_f32_slice(Some(&l), false, matrix.as_slice()),
+                None => return,
+            }
         }
     }
 
     pub fn upload_uniform_mat4(&self, gl: &glow::Context, name: &str, matrix: &Mat4) {
         unsafe {
-            let location = gl.get_uniform_location(self.renderer_id, name).unwrap();
-            gl.uniform_matrix_4_f32_slice(Some(&location), false, matrix.as_slice());
+            let location = gl.get_uniform_location(self.renderer_id, name);
+            match location {
+                Some(l) => gl.uniform_matrix_4_f32_slice(Some(&l), false, matrix.as_slice()),
+                None => return,
+            }
         }
     }
 
