@@ -132,6 +132,7 @@ impl Renderer {
 
                 // Gets the Texture Unit from the main function
                 uniform sampler2D tex0;
+                uniform sampler2D tex1;
                 uniform vec4 light_color;
                 uniform vec3 light_position;
                 uniform vec3 camera_position;
@@ -154,42 +155,22 @@ impl Renderer {
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
-        let mut texture = Texture::new(String::from("sandbox/assets/textures/brick.png"), 1.0);
+        let mut texture = Texture::new(String::from("adze/assets/textures/planks.png"), 1.0);
         texture.init(&gl);
 
         // Vertices coordinates
-        let vertices: Vec<f32> = vec![
-            //     COORDINATES     /        COLORS          /    TexCoord   /        NORMALS       //
-            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,      0.0, -1.0, 0.0, // Bottom side
-            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 5.0,      0.0, -1.0, 0.0, // Bottom side
-             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 5.0,      0.0, -1.0, 0.0, // Bottom side
-             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, -1.0, 0.0, // Bottom side
-
-            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,     -0.8, 0.5,  0.0, // Let Side
-            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,     -0.8, 0.5,  0.0, // Let Side
-             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,     -0.8, 0.5,  0.0, // Let Side
-
-            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, 0.5, -0.8, // Non-facing side
-             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 0.0,      0.0, 0.5, -0.8, // Non-facing side
-             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.0, 0.5, -0.8, // Non-facing side
-
-             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 0.0,      0.8, 0.5,  0.0, // Right side
-             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.8, 0.5,  0.0, // Right side
-             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.8, 0.5,  0.0, // Right side
-
-             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, 0.5,  0.8, // facing side
-            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,      0.0, 0.5,  0.8, // facing side
-             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.0, 0.5,  0.8  // facing side
+        let vertices: Vec<f32> = vec![ 
+            //     COORDINATES     /        COLORS        /    TexCoord    /       NORMALS     //
+           -1.0, 0.0,  1.0,		0.0, 0.0, 0.0,		0.0, 0.0,		0.0, 1.0, 0.0,
+           -1.0, 0.0, -1.0,		0.0, 0.0, 0.0,		0.0, 1.0,		0.0, 1.0, 0.0,
+           1.0, 0.0, -1.0,		0.0, 0.0, 0.0,		1.0, 1.0,		0.0, 1.0, 0.0,
+           1.0, 0.0,  1.0,		0.0, 0.0, 0.0,		1.0, 0.0,		0.0, 1.0, 0.0
         ];
 
         // Indices for vertices order
         let indices: Vec<u32> = vec![
-            0, 1, 2, // Bottom side
-            0, 2, 3, // Bottom side
-            4, 6, 5, // Left side
-            7, 9, 8, // Non-facing side
-            10, 12, 11, // Right side
-            13, 15, 14 // Facing side
+            0, 1, 2,
+            0, 2, 3
         ];
         let layout = BufferLayout::new(
             vec![
