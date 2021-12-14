@@ -20,6 +20,7 @@ pub struct Renderer {
     gl: glow::Context,
     shader: Shader,
     texture: Texture,
+    specular_map: Texture,
     vertex_array: VertexArray,
     light_shader: Shader,
     light_vertex_array: VertexArray,
@@ -151,12 +152,14 @@ impl Renderer {
                     float specular_factor = pow(max(dot(view_direction, reflection_direction), 0.0f), 8);
                     float specular = specular_factor * specular_light;
 
-                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient + specular, diffuse + ambient + specular, diffuse + ambient + specular, 1.0f);
+                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient, diffuse + ambient, diffuse + ambient, 1.0f) + texture(tex1, texture_coordinate).r * specular;
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
         let mut texture = Texture::new(String::from("adze/assets/textures/planks.png"), 1.0);
         texture.init(&gl);
+        let mut specular_map = Texture::new(String::from("adze/assets/textures/planksSpec.png"), 1.0);
+        specular_map.init(&gl);
 
         // Vertices coordinates
         let vertices: Vec<f32> = vec![ 
@@ -189,6 +192,7 @@ impl Renderer {
             gl,
             shader,
             texture,
+            specular_map,
             vertex_array,
             light_shader,
             light_vertex_array,
@@ -215,6 +219,7 @@ impl Renderer {
         unsafe {
             self.shader.bind(&self.gl);
             self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
+            self.shader.upload_uniform_integer1(&self.gl, "tex1", 1);
             self.shader.upload_uniform_float4(&self.gl, "light_color",  self.light_color);
             self.shader.upload_uniform_float3(&self.gl, "light_position",  self.light_position);
 
@@ -223,6 +228,7 @@ impl Renderer {
             self.shader.upload_uniform_mat4(&self.gl, "model", &translate);
 
             Texture::bind(&self.gl, self.texture.get_renderer_id().unwrap(), 0);
+            Texture::bind(&self.gl, self.specular_map.get_renderer_id().unwrap(), 1);
 
             self.vertex_array.bind(&self.gl);
 

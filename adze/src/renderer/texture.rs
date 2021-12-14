@@ -60,6 +60,7 @@ impl Texture {
                 let (image, internal_format, data_format) = match img {
                     DynamicImage::ImageRgb8(img) => (img.into_raw(), glow::RGB8, glow::RGB),
                     DynamicImage::ImageRgba8(img) => (img.into_raw(), glow::RGBA8, glow::RGBA),
+                    DynamicImage::ImageLuma8(img) => (img.into_raw(), glow::R8, glow::RED),
                     img => (img.to_rgb8().into_raw(), glow::RGB8, glow::RGB)
                 };
 
