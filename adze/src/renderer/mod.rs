@@ -97,17 +97,23 @@ impl Renderer {
                 layout (location = 0) in vec3 aposition;
                 layout (location = 1) in vec3 acolor;
                 layout (location = 2) in vec2 atexture_coordinate;
+                layout (location = 3) in vec3 anormal;
 
                 out vec3 color;
                 out vec2 texture_coordinate;
+                out vec3 normal;
+                out vec3 current_position;
 
                 uniform mat4 projection_view;
+                uniform mat4 model;
 
                 void main()
                 {
-                    gl_Position = projection_view * vec4(aposition, 1.0);
+                    current_position = vec3(model * vec4(aposition, 1.0f));
+                    gl_Position = projection_view * vec4(current_position, 1.0);
                     color = acolor;
                     texture_coordinate = atexture_coordinate;
+                    normal = anormal;
                 }
             ";
 
@@ -121,14 +127,24 @@ impl Renderer {
                 in vec3 color;
                 // Inputs the texture coordinates from the Vertex Shader
                 in vec2 texture_coordinate;
+                in vec3 normal;
+                in vec3 current_position;
 
                 // Gets the Texture Unit from the main function
                 uniform sampler2D tex0;
                 uniform vec4 light_color;
+                uniform vec3 light_position;
 
                 void main()
                 {
-                    FragColor = texture(tex0, texture_coordinate) * light_color;
+                    float ambient = 0.20f;
+
+                    vec3 n = normalize(normal);
+                    vec3 light_direction = normalize(light_position - current_position);
+
+                    float diffuse = max(dot(n, light_direction), 0.0f);
+
+                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient, diffuse + ambient, diffuse + ambient, 1.0f);
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
@@ -137,28 +153,44 @@ impl Renderer {
 
         // Vertices coordinates
         let vertices: Vec<f32> = vec![
-            //     COORDINATES     /        COLORS      /   TexCoord  //
-            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	0.0, 0.0,
-            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	5.0, 0.0,
-            0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	0.0, 0.0,
-            0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	5.0, 0.0,
-            0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	2.5, 5.0
+            //     COORDINATES     /        COLORS          /    TexCoord   /        NORMALS       //
+            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,      0.0, -1.0, 0.0, // Bottom side
+            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 5.0,      0.0, -1.0, 0.0, // Bottom side
+             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 5.0,      0.0, -1.0, 0.0, // Bottom side
+             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, -1.0, 0.0, // Bottom side
+
+            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,     -0.8, 0.5,  0.0, // Let Side
+            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,     -0.8, 0.5,  0.0, // Let Side
+             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,     -0.8, 0.5,  0.0, // Let Side
+
+            -0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, 0.5, -0.8, // Non-facing side
+             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 0.0,      0.0, 0.5, -0.8, // Non-facing side
+             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.0, 0.5, -0.8, // Non-facing side
+
+             0.5, 0.0, -0.5,     0.83, 0.70, 0.44,	 0.0, 0.0,      0.8, 0.5,  0.0, // Right side
+             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.8, 0.5,  0.0, // Right side
+             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.8, 0.5,  0.0, // Right side
+
+             0.5, 0.0,  0.5,     0.83, 0.70, 0.44,	 5.0, 0.0,      0.0, 0.5,  0.8, // facing side
+            -0.5, 0.0,  0.5,     0.83, 0.70, 0.44, 	 0.0, 0.0,      0.0, 0.5,  0.8, // facing side
+             0.0, 0.8,  0.0,     0.92, 0.86, 0.76,	 2.5, 5.0,      0.0, 0.5,  0.8  // facing side
         ];
 
         // Indices for vertices order
         let indices: Vec<u32> = vec![
-            0, 1, 2,
-            0, 2, 3,
-            0, 1, 4,
-            1, 2, 4,
-            2, 3, 4,
-            3, 0, 4
+            0, 1, 2, // Bottom side
+            0, 2, 3, // Bottom side
+            4, 6, 5, // Left side
+            7, 9, 8, // Non-facing side
+            10, 12, 11, // Right side
+            13, 15, 14 // Facing side
         ];
         let layout = BufferLayout::new(
             vec![
                 BufferElement::new("aposition".parse().unwrap(), ShaderDataType::Float3, false),
                 BufferElement::new("acolor".parse().unwrap(), ShaderDataType::Float3, false),
                 BufferElement::new("atexture_coordinate".parse().unwrap(), ShaderDataType::Float2, false),
+                BufferElement::new("anormal".parse().unwrap(), ShaderDataType::Float3, false),
             ]
         );
 
@@ -174,7 +206,7 @@ impl Renderer {
             light_shader,
             light_vertex_array,
             light_color: glm::vec4(1.0, 1.0, 1.0, 1.0),
-            light_position: glm::vec3(1.0, 1.0, 1.0)
+            light_position: glm::vec3(0.0, 0.0, 0.0)
         }
     }
 
@@ -182,6 +214,7 @@ impl Renderer {
         self.shader.bind(&self.gl);
         self.shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
         self.shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
+        self.shader.upload_uniform_float3(&self.gl, "light_position",  glm::vec3(1.0, 1.0, 1.0));
         self.light_shader.bind(&self.gl);
         self.light_shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
 
@@ -190,11 +223,16 @@ impl Renderer {
     pub fn end(&mut self) {
     }
 
-    pub fn draw(&self, rotation: f32) {
+    pub fn draw(&self, position: Vec3) {
         unsafe {
             self.shader.bind(&self.gl);
             self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
             self.shader.upload_uniform_float4(&self.gl, "light_color",  self.light_color);
+            self.shader.upload_uniform_float3(&self.gl, "light_position",  self.light_position);
+
+            let translate = glm::translate(&glm::identity(), &position);
+
+            self.shader.upload_uniform_mat4(&self.gl, "model", &translate);
 
             Texture::bind(&self.gl, self.texture.get_renderer_id().unwrap(), 0);
 
@@ -213,6 +251,7 @@ impl Renderer {
             self.light_shader.upload_uniform_mat4(&self.gl, "model",  &translate);
             self.light_shader.upload_uniform_float4(&self.gl, "light_color",  color);
             self.light_color = color;
+            self.light_position = position;
 
             self.light_vertex_array.bind(&self.gl);
 

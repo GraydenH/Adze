@@ -10,7 +10,6 @@ use adze::app::timer::Timer;
 
 pub struct Sandbox {
     camera_controller: FlyingCameraController,
-    rotation: f32,
     width: u32,
     height: u32
 }
@@ -23,7 +22,6 @@ impl Sandbox {
 
         Sandbox {
             camera_controller,
-            rotation: 0.0,
             width,
             height
         }
@@ -34,15 +32,13 @@ impl EventListener for Sandbox {
     fn on_tick(&mut self, renderer: &mut Renderer) {
         let _timer = Timer::new("SandBox::on_tick");
 
-        self.rotation += 0.01;
-
         self.camera_controller.on_tick();
         self.camera_controller.recalculate_matrix();
 
         renderer.clear();
         renderer.begin(&self.camera_controller.camera());
-        renderer.draw_light(glm::vec3(0.5, 0.5, 0.5), glm::vec4(1.0, 0.0, 0.0, 1.0));
-        renderer.draw(self.rotation);
+        renderer.draw_light(glm::vec3(0.5, 0.5, 0.5), glm::vec4(1.0, 1.0, 1.0, 1.0));
+        renderer.draw(glm::vec3(0.0, 0.0, 0.0));
         renderer.end();
     }
 
