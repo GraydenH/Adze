@@ -20,11 +20,74 @@ pub struct Renderer {
     gl: glow::Context,
     shader: Shader,
     texture: Texture,
-    pub vertex_array: VertexArray,
+    vertex_array: VertexArray,
+    light_shader: Shader,
+    light_vertex_array: VertexArray,
 }
 
 impl Renderer {
     pub fn new(gl: glow::Context) -> Renderer {
+        let light_vs_src: &str = "
+                #version 330 core
+                layout (location = 0) in vec3 aposition;
+
+                uniform mat4 model;
+                uniform mat4 projection_view;
+
+                void main() {
+                    gl_Position = projection_view * model * vec4(aposition, 1.0f);
+                }
+            ";
+
+        let light_fs_src: &str = "
+                #version 330 core
+
+                out vec4 FragColor;
+
+                uniform vec4 light_color;
+
+                void main() {
+                    FragColor = light_color;
+                }
+            ";
+
+        let light_vertices = vec![
+            -0.1, -0.1,  0.1,
+            -0.1, -0.1, -0.1,
+            0.1, -0.1, -0.1,
+            0.1, -0.1,  0.1,
+            -0.1,  0.1,  0.1,
+            -0.1,  0.1, -0.1,
+            0.1,  0.1, -0.1,
+            0.1,  0.1,  0.1
+        ];
+
+        let light_indices = vec![
+            0, 1, 2,
+            0, 2, 3,
+            0, 4, 7,
+            0, 7, 3,
+            3, 7, 6,
+            3, 6, 2,
+            2, 6, 5,
+            2, 5, 1,
+            1, 5, 4,
+            1, 4, 0,
+            4, 5, 6,
+            4, 6, 7
+        ];
+        let light_shader = Shader::new(&gl, light_vs_src, light_fs_src);
+
+        let light_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("aposition".parse().unwrap(), ShaderDataType::Float3, false),
+            ]
+        );
+
+        let light_index_buffer = IndexBuffer::new(&gl, light_indices);
+        let light_vertex_buffer = VertexBuffer::new(&gl, light_vertices, light_layout);
+        let light_vertex_array = VertexArray::new(&gl, light_index_buffer, light_vertex_buffer);
+
         // Shader sources
         let vs_src: &str = "
                 #version 330 core
@@ -104,13 +167,17 @@ impl Renderer {
             gl,
             shader,
             texture,
-            vertex_array
+            vertex_array,
+            light_shader,
+            light_vertex_array
         }
     }
 
     pub fn begin(&mut self, camera: &PerspectiveCamera) {
         self.shader.bind(&self.gl);
         self.shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
+        self.light_shader.bind(&self.gl);
+        self.light_shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
 
     }
 
@@ -120,14 +187,28 @@ impl Renderer {
     pub fn draw(&self, rotation: f32) {
         unsafe {
             self.shader.bind(&self.gl);
+            self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
 
             Texture::bind(&self.gl, self.texture.get_renderer_id().unwrap(), 0);
-
-            self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
 
             self.vertex_array.bind(&self.gl);
 
             self.gl.draw_elements(glow::TRIANGLES, self.vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
+        }
+    }
+
+    pub fn draw_light(&self, position: Vec3) {
+        unsafe {
+            self.light_shader.bind(&self.gl);
+
+            let translate = glm::translate(&glm::identity(), &position);
+
+            self.light_shader.upload_uniform_mat4(&self.gl, "model",  &translate);
+            self.light_shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
+
+            self.light_vertex_array.bind(&self.gl);
+
+            self.gl.draw_elements(glow::TRIANGLES, self.light_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
         }
     }
 

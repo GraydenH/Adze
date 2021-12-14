@@ -42,6 +42,7 @@ impl EventListener for Sandbox {
         renderer.clear();
         renderer.begin(&self.camera_controller.camera());
         renderer.draw(self.rotation);
+        renderer.draw_light(glm::vec3(0.5, 0.5, 0.5));
         renderer.end();
     }
 
