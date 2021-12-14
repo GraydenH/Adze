@@ -196,7 +196,7 @@ impl PerspectiveCamera {
         self.position = value;
     }
 
-    fn position(&self) -> Vec3 {
+    pub(crate) fn position(&self) -> Vec3 {
         self.position
     }
 

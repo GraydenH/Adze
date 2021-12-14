@@ -134,6 +134,7 @@ impl Renderer {
                 uniform sampler2D tex0;
                 uniform vec4 light_color;
                 uniform vec3 light_position;
+                uniform vec3 camera_position;
 
                 void main()
                 {
@@ -141,10 +142,15 @@ impl Renderer {
 
                     vec3 n = normalize(normal);
                     vec3 light_direction = normalize(light_position - current_position);
-
                     float diffuse = max(dot(n, light_direction), 0.0f);
 
-                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient, diffuse + ambient, diffuse + ambient, 1.0f);
+                    float specular_light = 0.50f;
+                    vec3 view_direction = normalize(camera_position - current_position);
+                    vec3 reflection_direction = reflect(-light_direction, normal);
+                    float specular_factor = pow(max(dot(view_direction, reflection_direction), 0.0f), 8);
+                    float specular = specular_factor * specular_light;
+
+                    FragColor = texture(tex0, texture_coordinate) * light_color * vec4(diffuse + ambient + specular, diffuse + ambient + specular, diffuse + ambient + specular, 1.0f);
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
@@ -215,6 +221,7 @@ impl Renderer {
         self.shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
         self.shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
         self.shader.upload_uniform_float3(&self.gl, "light_position",  glm::vec3(1.0, 1.0, 1.0));
+        self.shader.upload_uniform_float3(&self.gl, "camera_position",  camera.position());
         self.light_shader.bind(&self.gl);
         self.light_shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
 
