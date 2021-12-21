@@ -9,89 +9,34 @@ use crate::glm::{Vec2, Vec3, Vec4, Mat4};
 use crate::renderer::buffer::{BufferElement, BufferLayout, IndexBuffer, ShaderDataType, VertexArray, VertexBuffer};
 use core::mem;
 use crate::renderer::camera::PerspectiveCamera;
+use crate::renderer::mesh::Mesh;
+use crate::renderer::texture::TextureType;
 
 pub mod buffer;
 pub mod camera;
 pub mod shader;
 pub mod texture;
 pub mod renderer_2d;
+pub mod mesh;
+
+pub struct Vertex {
+    position: Vec3,
+    color: Vec3,
+    tex_uv: Vec2,
+    normal: Vec3,
+}
 
 pub struct Renderer {
     gl: glow::Context,
     shader: Shader,
-    texture: Texture,
-    specular_map: Texture,
     vertex_array: VertexArray,
-    light_shader: Shader,
-    light_vertex_array: VertexArray,
     light_color: Vec4,
     light_position: Vec3,
+    mesh: Mesh
 }
 
 impl Renderer {
     pub fn new(gl: glow::Context) -> Renderer {
-        let light_vs_src: &str = "
-                #version 330 core
-                layout (location = 0) in vec3 aposition;
-
-                uniform mat4 model;
-                uniform mat4 projection_view;
-
-                void main() {
-                    gl_Position = projection_view * model * vec4(aposition, 1.0f);
-                }
-            ";
-
-        let light_fs_src: &str = "
-                #version 330 core
-
-                out vec4 FragColor;
-
-                uniform vec4 light_color;
-
-                void main() {
-                    FragColor = light_color;
-                }
-            ";
-
-        let light_vertices = vec![
-            -0.1, -0.1,  0.1,
-            -0.1, -0.1, -0.1,
-            0.1, -0.1, -0.1,
-            0.1, -0.1,  0.1,
-            -0.1,  0.1,  0.1,
-            -0.1,  0.1, -0.1,
-            0.1,  0.1, -0.1,
-            0.1,  0.1,  0.1
-        ];
-
-        let light_indices = vec![
-            0, 1, 2,
-            0, 2, 3,
-            0, 4, 7,
-            0, 7, 3,
-            3, 7, 6,
-            3, 6, 2,
-            2, 6, 5,
-            2, 5, 1,
-            1, 5, 4,
-            1, 4, 0,
-            4, 5, 6,
-            4, 6, 7
-        ];
-        let light_shader = Shader::new(&gl, light_vs_src, light_fs_src);
-
-        let light_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("aposition".parse().unwrap(), ShaderDataType::Float3, false),
-            ]
-        );
-
-        let light_index_buffer = IndexBuffer::new(&gl, light_indices);
-        let light_vertex_buffer = VertexBuffer::new(&gl, light_vertices, light_layout);
-        let light_vertex_array = VertexArray::new(&gl, light_index_buffer, light_vertex_buffer);
-
-        // Shader sources
         let vs_src: &str = "
                 #version 330 core
 
@@ -211,18 +156,17 @@ impl Renderer {
                 }
             ";
         let shader = Shader::new(&gl, vs_src, fs_src);
-        let mut texture = Texture::new(String::from("adze/assets/textures/planks.png"), 1.0);
-        texture.init(&gl);
-        let mut specular_map = Texture::new(String::from("adze/assets/textures/planksSpec.png"), 1.0);
-        specular_map.init(&gl);
+
+        let texture = Texture::new(&gl, String::from("adze/assets/textures/planks.png"), 1.0, TextureType::Diffuse);
+        let specular_map = Texture::new(&gl, String::from("adze/assets/textures/planksSpec.png"), 1.0, TextureType::Specular);
 
         // Vertices coordinates
-        let vertices: Vec<f32> = vec![ 
+        let vertices: Vec<Vertex> = vec![
             //     COORDINATES     /        COLORS        /    TexCoord    /       NORMALS     //
-           -1.0, 0.0,  1.0,		0.0, 0.0, 0.0,		0.0, 0.0,		0.0, 1.0, 0.0,
-           -1.0, 0.0, -1.0,		0.0, 0.0, 0.0,		0.0, 1.0,		0.0, 1.0, 0.0,
-           1.0, 0.0, -1.0,		0.0, 0.0, 0.0,		1.0, 1.0,		0.0, 1.0, 0.0,
-           1.0, 0.0,  1.0,		0.0, 0.0, 0.0,		1.0, 0.0,		0.0, 1.0, 0.0
+            Vertex {position: glm::vec3(-1.0, 0.0, 1.0), color: glm::vec3(0.0, 0.0, 0.0), tex_uv: glm::vec2(0.0, 0.0), normal: glm::vec3(0.0, 1.0, 0.0)},
+            Vertex {position: glm::vec3(-1.0, 0.0, -1.0), color: glm::vec3(0.0, 0.0, 0.0), tex_uv: glm::vec2(0.0, 1.0), normal: glm::vec3(0.0, 1.0, 0.0)},
+            Vertex {position: glm::vec3(1.0, 0.0, -1.0), color: glm::vec3(0.0, 0.0, 0.0), tex_uv: glm::vec2(1.0, 1.0), normal: glm::vec3(0.0, 1.0, 0.0)},
+            Vertex {position: glm::vec3(1.0, 0.0, 1.0), color: glm::vec3(0.0, 0.0, 0.0), tex_uv: glm::vec2(1.0, 0.0), normal: glm::vec3(0.0, 1.0, 0.0)}
         ];
 
         // Indices for vertices order
@@ -230,29 +174,16 @@ impl Renderer {
             0, 1, 2,
             0, 2, 3
         ];
-        let layout = BufferLayout::new(
-            vec![
-                BufferElement::new("aposition".parse().unwrap(), ShaderDataType::Float3, false),
-                BufferElement::new("acolor".parse().unwrap(), ShaderDataType::Float3, false),
-                BufferElement::new("atexture_coordinate".parse().unwrap(), ShaderDataType::Float2, false),
-                BufferElement::new("anormal".parse().unwrap(), ShaderDataType::Float3, false),
-            ]
-        );
 
-        let index_buffer = IndexBuffer::new(&gl, indices);
-        let vertex_buffer = VertexBuffer::new(&gl, vertices, layout);
-        let vertex_array = VertexArray::new(&gl, index_buffer, vertex_buffer);
+        let mesh = Mesh::new(&gl, vertices, indices, vec![texture, specular_map]);
 
         Renderer {
             gl,
             shader,
-            texture,
-            specular_map,
             vertex_array,
-            light_shader,
-            light_vertex_array,
             light_color: glm::vec4(1.0, 1.0, 1.0, 1.0),
-            light_position: glm::vec3(0.0, 0.0, 0.0)
+            light_position: glm::vec3(0.0, 0.0, 0.0),
+            mesh
         }
     }
 
@@ -262,15 +193,12 @@ impl Renderer {
         self.shader.upload_uniform_float4(&self.gl, "light_color",  glm::vec4(1.0, 1.0, 1.0, 1.0));
         self.shader.upload_uniform_float3(&self.gl, "light_position",  glm::vec3(1.0, 1.0, 1.0));
         self.shader.upload_uniform_float3(&self.gl, "camera_position",  camera.position());
-        self.light_shader.bind(&self.gl);
-        self.light_shader.upload_uniform_mat4(&self.gl, "projection_view",  &camera.projection_view());
-
     }
 
     pub fn end(&mut self) {
     }
 
-    pub fn draw(&self, position: Vec3) {
+    pub fn draw_mesh(&self, mesh: &Mesh, position: Vec3) {
         unsafe {
             self.shader.bind(&self.gl);
             self.shader.upload_uniform_integer1(&self.gl, "tex0", 0);
@@ -292,20 +220,8 @@ impl Renderer {
     }
 
     pub fn draw_light(&mut self, position: Vec3, color: Vec4) {
-        unsafe {
-            self.light_shader.bind(&self.gl);
-
-            let translate = glm::translate(&glm::identity(), &position);
-
-            self.light_shader.upload_uniform_mat4(&self.gl, "model",  &translate);
-            self.light_shader.upload_uniform_float4(&self.gl, "light_color",  color);
-            self.light_color = color;
-            self.light_position = position;
-
-            self.light_vertex_array.bind(&self.gl);
-
-            self.gl.draw_elements(glow::TRIANGLES, self.light_vertex_array.get_indices_len() as i32, glow::UNSIGNED_INT, 0);
-        }
+        self.light_color = color;
+        self.light_position = position;
     }
 
     pub fn borrow_context(&self) -> &glow::Context {

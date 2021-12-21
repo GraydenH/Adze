@@ -1,59 +1,28 @@
 use image::{GenericImageView, DynamicImage};
 use glow::{HasContext, PixelUnpackData};
 
+pub enum TextureType {
+    Diffuse,
+    Specular
+}
+
 pub struct Texture {
-    renderer_id: Option<glow::Texture>,
+    renderer_id: glow::Texture,
     path: String,
     tiling: f32,
     width: u32,
     height: u32,
     data: Vec<u8>,
     internal_format: u32,
-    data_format: u32
+    data_format: u32,
+    texture_type: TextureType
 }
 
 impl Texture {
-    pub fn new(path: String, tiling: f32) -> Texture {
-        Texture {
-            renderer_id: None,
-            path,
-            tiling,
-            width: 0,
-            height: 0,
-            data: vec![],
-            internal_format: 0,
-            data_format: 0
-        }
-    }
-
-    pub fn set_renderer_id(&mut self, renderer_id: glow::Texture) {
-        self.renderer_id = Some(renderer_id);
-    }
-
-    pub fn get_renderer_id(&self) -> Option<glow::Texture> {
-        self.renderer_id
-    }
-
-    pub fn set_path(&mut self, path: String) {
-        self.path = path;
-    }
-
-    pub fn get_path(&self) -> &String {
-        &self.path
-    }
-
-    pub fn set_tiling(&mut self, tiling: f32) {
-        self.tiling = tiling;
-    }
-
-    pub fn get_tiling(&self) -> f32 {
-        self.tiling
-    }
-
     // https://www.reddit.com/r/rust/comments/7me7zr/using_image_crate_to_load_an_image_and_use_it_as/
-    pub(crate) fn init(&mut self, gl: &glow::Context) {
-        match image::open(String::from(self.get_path())) {
-            Err(err) => panic!("Could not load image {}: {}", self.get_path(), err),
+    pub fn new(gl: &glow::Context, path: String, tiling: f32, texture_type: TextureType) -> Texture {
+        match image::open(String::from(&path)) {
+            Err(err) => panic!("Could not load image {}: {}", path, err),
             Ok(img) => unsafe {
                 let (width, height) = img.dimensions();
 
@@ -77,12 +46,42 @@ impl Texture {
                 gl.tex_sub_image_2d(glow::TEXTURE_2D, 0, 0, 0, width as i32, height as i32, data_format, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(image.as_slice()));
                 gl.generate_mipmap(glow::TEXTURE_2D);
 
-                self.set_renderer_id(renderer_id);
+                Texture {
+                    renderer_id,
+                    path,
+                    tiling,
+                    width: 0,
+                    height: 0,
+                    data: vec![],
+                    internal_format: 0,
+                    data_format: 0,
+                    texture_type
+                }
             }
         }
     }
 
-    pub fn from_dimensions(gl: &glow::Context, width: u32, height: u32) -> Self {
+    pub fn get_renderer_id(&self) -> glow::Texture {
+        self.renderer_id
+    }
+
+    pub fn set_path(&mut self, path: String) {
+        self.path = path;
+    }
+
+    pub fn get_path(&self) -> &String {
+        &self.path
+    }
+
+    pub fn set_tiling(&mut self, tiling: f32) {
+        self.tiling = tiling;
+    }
+
+    pub fn get_tiling(&self) -> f32 {
+        self.tiling
+    }
+
+    pub fn from_dimensions(gl: &glow::Context, width: u32, height: u32, texture_type: TextureType) -> Self {
         unsafe {
             let internal_format = glow::RGBA8;
             let data_format = glow::RGBA;
@@ -100,19 +99,20 @@ impl Texture {
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::REPEAT as i32);
 
             Texture {
-                renderer_id: Some(renderer_id),
+                renderer_id,
                 path: "".to_string(),
                 tiling: 1.0,
                 width,
                 height,
                 data: vec![],
                 internal_format,
-                data_format
+                data_format,
+                texture_type
             }
         }
     }
 
-    pub fn from_data(gl: &glow::Context, data: Vec<u8>, width: u32, height: u32, internal_format: u32, data_format: u32) -> Self {
+    pub fn from_data(gl: &glow::Context, data: Vec<u8>, width: u32, height: u32, internal_format: u32, data_format: u32, texture_type: TextureType) -> Self {
         unsafe {
             let renderer_id = gl.create_texture().unwrap();
 
@@ -128,14 +128,15 @@ impl Texture {
 
             gl.tex_sub_image_2d(glow::TEXTURE_2D, 0, 0, 0, width as i32, height as i32, data_format, glow::UNSIGNED_BYTE, PixelUnpackData::Slice(data.as_slice()));
             Texture {
-                renderer_id: Some(renderer_id),
+                renderer_id,
                 path: "".to_string(),
                 tiling: 1.0,
                 width,
                 height,
                 data,
                 internal_format,
-                data_format
+                data_format,
+                texture_type
             }
         }
     }

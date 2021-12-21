@@ -1,5 +1,5 @@
 use glow::{HasContext, Buffer};
-use crate::renderer::buffer;
+use crate::renderer::{buffer, Vertex};
 use crate::renderer::renderer_2d::QuadVertex;
 
 #[derive(Clone, Copy)]
@@ -120,14 +120,14 @@ pub struct VertexBuffer {
 }
 
 impl VertexBuffer {
-    pub fn new(gl: &glow::Context, vertices: Vec<f32>, layout: BufferLayout) -> VertexBuffer {
+    pub fn new(gl: &glow::Context, vertices: Vec<Vertex>, layout: BufferLayout) -> VertexBuffer {
         unsafe {
             let renderer_id = gl.create_buffer().unwrap();
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(renderer_id));
 
             let vertices_u8: &[u8] = core::slice::from_raw_parts(
                 vertices.as_ptr() as *const u8,
-                vertices.len() * core::mem::size_of::<f32>(),
+                vertices.len() * core::mem::size_of::<Vertex>(),
             );
             gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vertices_u8, glow::STATIC_DRAW);
             VertexBuffer {

@@ -7,11 +7,13 @@ use adze::app::event::EventListener;
 use adze::app::layer::Layer;
 use adze::renderer::texture::Texture;
 use adze::app::timer::Timer;
+use adze::renderer::mesh::Mesh;
 
 pub struct Sandbox {
     camera_controller: FlyingCameraController,
     width: u32,
-    height: u32
+    height: u32,
+    mesh: Mesh,
 }
 
 impl Sandbox {
@@ -23,7 +25,7 @@ impl Sandbox {
         Sandbox {
             camera_controller,
             width,
-            height
+            height,
         }
     }
 }
@@ -38,7 +40,7 @@ impl EventListener for Sandbox {
         renderer.clear();
         renderer.begin(&self.camera_controller.camera());
         renderer.draw_light(glm::vec3(0.5, 0.5, 0.5), glm::vec4(1.0, 1.0, 1.0, 1.0));
-        renderer.draw(glm::vec3(0.0, 0.0, 0.0));
+        renderer.draw_mesh(&self.mesh, glm::vec3(0.0, 0.0, 0.0));
         renderer.end();
     }
 
