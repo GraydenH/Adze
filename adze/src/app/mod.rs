@@ -191,7 +191,8 @@ impl App {
                             layer.on_mouse_scroll(result);
                         }
                     },
-                    DeviceEvent::Key(input) => unsafe {
+
+                    DeviceEvent::Key(input) if !cfg!(not(macos)) => unsafe {
                         if let Some(keycode) = input.virtual_keycode {
                             let index = keycode as u16;
 
@@ -227,6 +228,24 @@ impl App {
                                 _ => {}
                             }
                         },
+                        glutin::event::WindowEvent::KeyboardInput { input , .. } if !cfg!(macos) => unsafe {
+                            if let Some(keycode) = input.virtual_keycode {
+                                let index = keycode as u16;
+    
+                                if input.state == ElementState::Pressed {
+                                    let repeat = KEY_PRESSED[index as usize];
+                                    KEY_PRESSED[index as usize] = true;
+                                    for layer in layer_stack.iter_mut().rev() {
+                                        layer.on_key_press(keycode, repeat);
+                                    }
+                                } else {
+                                    KEY_PRESSED[index as usize] = false;
+                                    for layer in layer_stack.iter_mut().rev() {
+                                        layer.on_key_release(keycode);
+                                    }
+                                };
+                            }
+                        }
                         _ => {}
                     }
 
